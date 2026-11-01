@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Benchmark Contradiction Index — Top-25 Intra-Family Scaling Audit</title>
+  <meta name="description" content="Measuring how often the Top 25 ranked models on 144 AI benchmarks contradict intra-family scaling laws (GPT-6.1 Sol > Terra > Luna, Claude Opus > Sonnet > Haiku)." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page-wrap" id="pageWrap">
+    <!-- Top Editorial Banner -->
+    <header class="editorial-header">
+      <div class="header-top-row">
+        <div class="brand-Group">
+          <div class="eyebrow-badge">
+            <span class="pulse-dot"></span>
+            <span>EMPIRICAL AI LEADERBOARD AUDIT &bull; 144 BENCHMARKS &bull; EQUAL-WEIGHTED TOP-25 PAIRS</span>
+          </div>
+          <h1>The AI Benchmark Contradiction Index</h1>
+          <p class="lead-subtitle">
+            How often do AI benchmarks contradict basic model-family scaling laws within their <strong>Top 25 ranked models</strong>?
+            A pair is contradicted iff a smaller tier or older generation outranks its larger/newer sibling within the exact same model family
+            (e.g., <code>GPT-6.1 Terra &gt; GPT-6.1 Sol</code>, <code>Claude Sonnet 5.5 &gt; Opus 5.5</code>, or <code>GPT-5.6 Sol &gt; GPT-6.1 Sol</code>).
+            Latency order is <strong>100% flipped</strong> (<code>Luna &lt; Terra &lt; Sol</code>), Cost expects <code>Cost(Sol) &ge; Cost(Terra) &ge; Cost(Luna)</code>, cross-axis pairs (<code>6.1 Sol</code> vs <code>6.0 Luna</code>) are never compared, and all valid axes are <strong>weighted equally</strong>.
+          </p>
+        </div>
+
+        <div class="utility-controls no-screenshot">
+          <button class="util-btn" id="themeToggleBtn" title="Switch between Editorial Light Mode and Dark Mode">
+            <span id="themeIcon">&#9728;&#65039;</span> <span id="themeLabel">Light</span>
+          </button>
+          <button class="util-btn" id="shotModeBtn" title="Clean X/Twitter &amp; Substack screenshot framing">
+            &#128248; X-Post View
+          </button>
+          <button class="util-btn" id="copyMdBtn" title="Copy current table as GitHub Markdown">
+            &#128203; Copy Markdown
+          </button>
+          <button class="util-btn" id="exportCsvBtn" title="Export current view as CSV">
+            &darr; CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Deedy-Style 4-Card Executive TL;DR Takeaways -->
+      <div class="tldr-grid">
+        <div class="tldr-card">
+          <div class="tldr-kicker">1. OVERALL CONTRADICTION RATE</div>
+          <div class="tldr-stat">
+            <span class="big-num text-rose" id="tldrOverallRate">18.9%</span>
+            <span class="stat-context" id="tldrOverallSub">64 / 339 Top-25 pairs inverted</span>
+          </div>
+          <p class="tldr-desc">
+            Across flagship AI benchmarks, nearly <strong>1 in 5</strong> intra-family comparisons in the Top 25 violates expected tier or generation order.
+          </p>
+        </div>
+
+        <div class="tldr-card">
+          <div class="tldr-kicker">2. THE REASONING VERBOSITY PARADOX</div>
+          <div class="tldr-stat">
+            <span class="big-num text-purple">Terra &gt; Sol</span>
+            <span class="stat-context">+14% Cost &bull; +151s Slower</span>
+          </div>
+          <p class="tldr-desc">
+            On <strong>FrontierCode 2.0</strong>, <code>GPT-6.1 Terra</code> beats <code>GPT-6.1 Sol</code> (0.423 vs 0.406), costs <strong>more per task</strong> ($1.29 vs $1.13), and runs slower because Terra emits <strong>1.71&times; more thinking tokens</strong>.
+          </p>
+        </div>
+
+        <div class="tldr-card">
+          <div class="tldr-kicker">3. MID-TIER UPSETS FLAGSHIP</div>
+          <div class="tldr-stat">
+            <span class="big-num text-amber">Sonnet &gt; Opus</span>
+            <span class="stat-context">8 Major Leaderboards</span>
+          </div>
+          <p class="tldr-desc">
+            <code>Claude Sonnet 5.5</code> outranks <code>Claude Opus 5.5</code> on <strong>AA-Briefcase (#1 vs #2)</strong>, <strong>Terminal-Bench 4.0 (#3 vs #4)</strong>, <strong>LiveBench Coding (#1 vs #2)</strong>, and <strong>HealthBench (#1 vs #6)</strong>.
+          </p>
+        </div>
+
+        <div class="tldr-card">
+          <div class="tldr-kicker">4. GOLD-STANDARD (0.0%) BENCHMARKS</div>
+          <div class="tldr-stat">
+            <span class="big-num text-emerald" id="tldrZeroCount">12 / 44</span>
+            <span class="stat-context">100% Hierarchy-Consistent</span>
+          </div>
+          <p class="tldr-desc">
+            <strong>AA Intelligence Index v5.0</strong>, <strong>LiveBench 2.0 Overall</strong>, <strong>GPQA Diamond</strong>, <strong>GDPval-AA</strong>, and <strong>CritPt v2 Hard</strong> have <strong>0%</strong> Top-25 contradictions.
+          </p>
+        </div>
+      </div>
+
+      <!-- Lab Hierarchy Scorecard Strip (Click to Filter by Lab) -->
+      <div class="family-strip" id="familyStrip"></div>
+    </header>
+
+    <!-- Primary Controls Bar: Restricted to Two Views (popular_benchmarks vs ALL) -->
+    <section class="controls-bar">
+      <div class="controls-left">
+        <div class="view-segmented" id="viewSwitch" role="tablist">
+          <button class="seg-view-btn active" data-view="popular_benchmarks" id="btnPopular">
+            &#9733; Popular Benchmarks <span class="seg-badge" id="cntPopular">44</span>
+          </button>
+          <button class="seg-view-btn" data-view="ALL" id="btnAll">
+            ALL Benchmarks <span class="seg-badge" id="cntAll">144</span>
+          </button>
+        </div>
+
+        <div class="polarity-pills" id="typeFilter">
+          <button class="pol-btn active" data-type="all">All Polarities</button>
+          <button class="pol-btn" data-type="quality">&uarr; Quality</button>
+          <button class="pol-btn" data-type="latency">&darr; Latency (100% Flip)</button>
+          <button class="pol-btn" data-type="cost">$ Cost</button>
+        </div>
+      </div>
+
+      <div class="controls-right no-screenshot">
+        <input type="text" id="searchInput" class="search-box" placeholder="Search benchmark or model (e.g. GPT-6.1, Sol, Terra, Opus 5.5, SWE-bench)..." />
+        <button class="util-btn" id="customizeBtn" title="Customize which benchmarks appear in popular_benchmarks">
+          &#9881;&#65039; Customize Popular
+        </button>
+      </div>
+    </section>
+
+    <!-- Customize Popular Benchmarks Drawer -->
+    <section class="customize-drawer hidden no-screenshot" id="customizeDrawer">
+      <div class="customize-header">
+        <div>
+          <strong>Customize <code>popular_benchmarks</code> View</strong>
+          <span class="customize-sub">Check or uncheck benchmarks to tailor your <code>popular_benchmarks</code> view (persisted in browser).</span>
+        </div>
+        <div class="customize-actions">
+          <button class="util-btn small-btn" id="resetPopularBtn">Reset Default (44)</button>
+          <button class="util-btn small-btn" id="closeCustomizeBtn">Done</button>
+        </div>
+      </div>
+      <div class="customize-grid" id="customizeGrid"></div>
+    </section>
+
+    <!-- Main Heatmap Comparison Table -->
+    <section class="table-container">
+      <div class="table-scroll-wrap">
+        <table class="deedy-table" id="contradictionTable">
+          <thead>
+            <tr>
+              <th class="col-rank">#</th>
+              <th class="col-bench sortable" data-sort="name">Benchmark &amp; Ecosystem</th>
+              <th class="col-type sortable" data-sort="type">Expected Rule</th>
+              <th class="col-score sortable active-sort" data-sort="score_desc">
+                Contradiction Score <span class="sort-indicator">&darr;</span>
+              </th>
+              <th class="col-pairs sortable" data-sort="pairs">Inverted / Pairs</th>
+              <th class="col-examples">
+                Headline Top-25 Inversions (Actual vs. Expected)
+                <span class="th-hint no-screenshot">Click any row to inspect full Top 25 &amp; all pairs</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <footer class="table-footer">
+        <div>
+          <strong>Methodology:</strong> Top 25 canonical models per leaderboard. Single-axis Hamming-1 comparisons only (Intra-Version Size Tier <code>Sol &gt; Terra &gt; Luna</code> and Inter-Version Same-Tier <code>6.1 Sol &gt; 6.0 Sol</code> weighted 1:1). Crossed pairs (<code>6.1 Sol</code> vs <code>6.0 Luna</code>) excluded.
+        </div>
+        <div class="footer-right">
+          <span>AI Benchmark Contradiction Index (Nov 2026)</span>
+        </div>
+      </footer>
+    </section>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
