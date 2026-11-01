@@ -369,7 +369,7 @@ def parse_model(raw_name, is_reasoning_flag=None):
                 else:
                     return None
             q_fam = 'Alibaba Qwen'
-            if 'coder' in sl:
+            if 'coder' in sl or 'codeqwen' in sl:
                 q_fam = 'Alibaba Qwen Coder'
             elif re.search(r'\bvl\b', sl):
                 q_fam = 'Alibaba Qwen VL'
@@ -414,9 +414,9 @@ def parse_model(raw_name, is_reasoning_flag=None):
         if 'spark' in sl:
             ms = re.search(r'spark[- ]*(\d+(?:\.\d+)?)', sl)
             ver = float(ms.group(1)) if ms else 1.0
-            tier, tier_rank = ('Spark Open', 1.0) if 'open' in sl else ('Spark', 3.0)
+            tier, tier_rank = ('Spark Open', 1.0) if 'open' in sl else ('Spark', 1.5)
             return {
-                'raw': raw_name, 'family': 'Meta Muse Spark',
+                'raw': raw_name, 'family': 'Meta Muse',
                 'version': ver, 'version_str': f"{ver:.1f}",
                 'tier': tier, 'tier_rank': tier_rank,
                 'effort': effort_name, 'effort_rank': effort_rank,
@@ -431,8 +431,8 @@ def parse_model(raw_name, is_reasoning_flag=None):
                 'variant_tag': variant_tag
             }
 
-    if 'llama' in sl and 'nemotron' not in sl and 'hermes' not in sl and 'tulu' not in sl and 'openassistant' not in sl:
-        mll = re.search(r'llama[- ]*(\d+(?:\.\d+)?)', sl)
+    if 'llama' in sl and 'codellama' not in sl and 'code-llama' not in sl and 'nemotron' not in sl and 'hermes' not in sl and 'tulu' not in sl and 'openassistant' not in sl:
+        mll = re.search(r'llama[- ]*([1234](?:\.\d+)?)\b', sl)
         if mll:
             ver = float(mll.group(1))
             v_str = f"{ver:g}" if ver != int(ver) else f"{int(ver)}.0"
@@ -483,7 +483,7 @@ def parse_model(raw_name, is_reasoning_flag=None):
         elif 'medium' in sl: tier, tier_rank = 'Medium', 2.0
         elif 'small' in sl: tier, tier_rank = 'Small', 1.0
         if tier:
-            mm = re.search(r'(?:large|medium|small)[- ]*(\d+(?:[.-]\d+)?)', sl)
+            mm = re.search(r'(?:large|medium|small)[- ]*([1234](?:[.-]\d+)?)(?!\d*b)\b', sl)
             ver = float(mm.group(1).replace('-', '.')) if mm else 3.0
             v_str = f"{ver:g}" if ver != int(ver) else f"{int(ver)}.0"
             return {
@@ -504,7 +504,7 @@ def parse_model(raw_name, is_reasoning_flag=None):
             if ('-max' in sl or '(max' in sl) and effort_rank < 6.0:
                 effort_name, effort_rank = 'Max', 6.0
             return {
-                'raw': raw_name, 'family': 'Moonshot Kimi',
+                'raw': raw_name, 'family': 'Moonshot Kimi Code' if 'code' in sl else 'Moonshot Kimi',
                 'version': ver, 'version_str': v_str,
                 'tier': tier, 'tier_rank': tier_rank,
                 'effort': effort_name, 'effort_rank': effort_rank,
@@ -609,7 +609,7 @@ def parse_model(raw_name, is_reasoning_flag=None):
 
     # 15. COHERE COMMAND
     if 'command' in sl:
-        ver = 2.0 if 'command a' in sl else 1.0
+        ver = 2.0 if re.search(r'command[- ]*a\b', sl) else 1.0
         tier, tier_rank = ('Plus', 3.0) if '+' in sl or 'plus' in sl else ('Base', 2.0)
         return {
             'raw': raw_name, 'family': 'Cohere Command',

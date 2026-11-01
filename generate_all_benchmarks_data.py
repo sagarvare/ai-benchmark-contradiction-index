@@ -68,8 +68,8 @@ def build_all_benchmarks():
         valid_cnt = sum(1 for x in items if x.get('score') is not None and not isinstance(x.get('score'), str))
         if valid_cnt < 10:
             return
-        res_canonical = evaluate_ranking(items, metric_type=metric_type, higher_is_better=higher_is_better, top_k=25, deduplicate_canonical=True)
-        res_raw = evaluate_ranking(items, metric_type=metric_type, higher_is_better=higher_is_better, top_k=25, deduplicate_canonical=False)
+        res_canonical = evaluate_ranking(items, metric_type=metric_type, higher_is_better=higher_is_better, top_k=50, deduplicate_canonical=True)
+        res_raw = evaluate_ranking(items, metric_type=metric_type, higher_is_better=higher_is_better, top_k=50, deduplicate_canonical=False)
         res_full = evaluate_ranking(items, metric_type=metric_type, higher_is_better=higher_is_better, top_k=250, deduplicate_canonical=True)
         benchmarks.append({
             'id': slug,
@@ -638,9 +638,12 @@ def build_all_benchmarks():
         return s.strip()
 
     def fmt_score(val, unit, mtype):
-        if mtype == 'cost' or ('$' in (unit or '')):
+        u = (unit or '').lower()
+        if mtype == 'cost' or ('$' in u):
             return f"${val:.3f}" if val < 1 else f"${val:.2f}"
-        if mtype == 'latency' and 'sec' in (unit or '').lower():
+        if 'tokens/sec' in u or 'tok/s' in u:
+            return f"{val:.1f} tok/s"
+        if mtype == 'latency' and 'sec' in u:
             return f"{val:.1f}s"
         return f"{val:.1f}" if val > 10 else f"{val:.3f}".rstrip('0').rstrip('.')
 
@@ -650,94 +653,57 @@ def build_all_benchmarks():
         sa = fmt_score(p['score_a'], b['unit'], mtype)
         sb = fmt_score(p['score_b'], b['unit'], mtype)
         if mtype == 'latency':
-            return f"`{ma} (#{p['rank_a']}, {sa}) faster than {mb} (#{p['rank_b']}, {sb})`"
+            return f"**{ma}** (#{p['rank_a']}, {sa}) faster than **{mb}** (#{p['rank_b']}, {sb})"
         if mtype == 'cost':
-            return f"`{mb} ({sb}) > {ma} ({sa})`"
-        return f"`{mb} (#{p['rank_b']}, {sb}) > {ma} (#{p['rank_a']}, {sa})`"
+            return f"**{mb}** ({sb}) cost more than **{ma}** ({sa})"
+        return f"**{mb}** (#{p['rank_b']}, {sb}) ahead of **{ma}** (#{p['rank_a']}, {sa})"
 
     def make_table(benches):
-        benches = sorted(benches, key=lambda b: (b['canonical_top25']['contradiction_score'], b['canonical_top25']['contradictions_count'], b['canonical_top25']['comparable_pairs_count']), reverse=True)
+        benches = sorted(benches, key=lambda b: (b['canonical_top25']['contradictions_count'], b['canonical_top25']['comparable_pairs_count']), reverse=True)
         lines = [
-            '| # | Benchmark | Suite | Polarity | Contradiction Score | Inverted / Pairs | Top-25 Inversions (Actual vs. Expected) |',
-            '| :-: | :--- | :--- | :-: | :-: | :-: | :--- |'
+            '| # | Benchmark | Suite | Metric | Inverted Pairs | Comparable Pairs | Inverted Pairs in Top 50 |',
+            '| :-: | :--- | :--- | :--- | :-: | :-: | :--- |'
         ]
         for i, b in enumerate(benches, 1):
             c = b['canonical_top25']
-            pol = 'Latency (Flip)' if b['metric_type'] == 'latency' else ('Cost' if b['metric_type'] == 'cost' else 'Quality')
+            pol = 'Latency' if b['metric_type'] == 'latency' else ('Cost' if b['metric_type'] == 'cost' else 'Quality')
             if c['contradictions']:
-                ex = ' · '.join(fmt_chip(p, b) for p in c['contradictions'][:2])
+                ex = '; '.join(fmt_chip(p, b) for p in c['contradictions'][:2])
                 if len(c['contradictions']) > 2:
                     ex += f" *(+{len(c['contradictions'])-2} more)*"
             else:
-                vp = [f"`{clean_label(p['model_a'])} (#{p['rank_a']}) > {clean_label(p['model_b'])} (#{p['rank_b']})`" for p in c['valid_pairs'][:2]]
-                ex = '✓ **100% Consistent**' + (f" ({', '.join(vp)})" if vp else '')
-            lines.append(f"| {i} | **{b['name']}** | {b['suite']} | {pol} | **{c['contradiction_score']:.1f}%** | `{c['contradictions_count']} / {c['comparable_pairs_count']}` | {ex} |")
+                ex = f"None (all {c['comparable_pairs_count']} pairs follow expected order)"
+            lines.append(f"| {i} | **{b['name']}** | {b['suite']} | {pol} | **{c['contradictions_count']}** | {c['comparable_pairs_count']} | {ex} |")
         return '\n'.join(lines)
 
     pop = [b for b in benchmarks if b.get('is_popular')]
     all_b = [b for b in benchmarks if b['canonical_top25']['comparable_pairs_count'] > 0]
     readme_md = (
-        "# AI Benchmark Contradiction Index\n\n"
-        "A single, equal-weighted meta-benchmark measuring how frequently the **Top 25 ranked models** on AI leaderboards violate intra-family scaling laws.\n\n"
-        "> [!IMPORTANT]\n"
-        "> **Single Shareable Table & App (`popular_benchmarks` vs `ALL`)**:\n"
-        "> - **Interactive Web Table**: [index.html](file:///Users/sagar-sayali/ai-benchmark-contradiction-index/index.html) ([app.js](file:///Users/sagar-sayali/ai-benchmark-contradiction-index/app.js), [styles.css](file:///Users/sagar-sayali/ai-benchmark-contradiction-index/styles.css), [data.js](file:///Users/sagar-sayali/ai-benchmark-contradiction-index/data.js))\n"
-        "> - **Single-File Zero-Dependency Bundle (Drop Anywhere to Host/Share)**: [shareable_table.html](file:///Users/sagar-sayali/ai-benchmark-contradiction-index/shareable_table.html)\n"
-        "> - **Generator & Taxonomy**: [generate_all_benchmarks_data.py](file:///Users/sagar-sayali/ai-benchmark-contradiction-index/generate_all_benchmarks_data.py), [compute_contradictions.py](file:///Users/sagar-sayali/ai-benchmark-contradiction-index/compute_contradictions.py), [model_taxonomy.py](file:///Users/sagar-sayali/ai-benchmark-contradiction-index/model_taxonomy.py)\n\n"
+        "# AI Benchmark Inverted Pairs\n\n"
+        "- **Live Table (Popular Benchmarks)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks)\n"
+        "- **Live Table (All 144 Benchmarks)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL)\n"
+        "- **Repository**: [https://github.com/sagarvare/ai-benchmark-contradiction-index](https://github.com/sagarvare/ai-benchmark-contradiction-index)\n\n"
+        "This table measures the **count of inverted model pairs** within the **Top 50 ranked models** on each AI benchmark. "
+        "A pair of models is counted as inverted when their relative ranking contradicts the expected ordering within the same model family under two rules:\n\n"
+        "1. **Same-generation tier rule:** Within the same model family and version, a larger tier is expected to rank ahead of a smaller tier "
+        "(for example, **GPT 6.1 Sol** ahead of **GPT 6.1 Terra** ahead of **GPT 6.1 Luna**, or **Claude Opus 5.5** ahead of **Claude Sonnet 5.5** ahead of **Claude Haiku 5.5**). "
+        "For latency benchmarks, this order is reversed so smaller models are expected to be faster. For cost benchmarks, larger models are expected to cost more.\n"
+        "2. **Cross-generation same-tier rule:** Within the same model family and size tier, a newer version is expected to rank ahead of an older version "
+        "(for example, **GPT 6.1 Sol** ahead of **GPT 6.0 Sol**, or **Claude Opus 5.5** ahead of **Claude Opus 4.7**). "
+        "Crossed pairs such as **GPT 6.1 Sol** and **GPT 6.0 Luna** are not compared.\n\n"
         "---\n\n"
-        "## 1. Equal-Weighted Contradiction Score Rule\n\n"
-        "Every model in a benchmark's **Top 25** is parsed into $(\\text{Family}, \\text{Version}, \\text{Size Tier})$. Two models in the Top 25 are **comparable** if and only if they belong to the same model family and differ along **strictly one axis** (all comparable pairs are **weighted equally**):\n\n"
-        "- **Intra-Version Size Tier** (same version, different size class): e.g., `GPT-6.1 Sol > GPT-6.1 Terra > GPT-6.1 Luna`, `Claude Opus 5.5 > Sonnet 5.5 > Haiku 5.5`, `Gemini 4 Carbon > Argon`.\n"
-        "- **Inter-Version Same-Tier** (same size class, different version): e.g., `GPT-6.1 Sol > GPT-6.0 Sol > GPT-5.6 Sol`, `Claude Opus 5.5 > Opus 4.7 > Opus 4.6`.\n"
-        "- **Cross-Axis Exclusion**: Crossed pairs (`GPT-6.1 Sol` vs `GPT-6.0 Luna`) are **never** compared.\n"
-        "- **Expected Polarity**:\n"
-        "  - **Quality**: Larger tier / newer generation scores higher (`Sol >= Terra >= Luna`, `6.1 Sol >= 6.0 Sol`).\n"
-        "  - **Latency / Speed**: **100% flipped** (`Luna` faster / lower latency than `Terra` faster than `Sol`).\n"
-        "  - **Cost (Unit & Total Benchmark Run Cost)**: Larger tier costs at least as much as smaller tier (`Cost(Sol) >= Cost(Terra) >= Cost(Luna)`).\n\n"
-        "$$\\text{Contradiction Score} = \\frac{\\text{Contradicted Top-25 Pairs}}{\\text{Comparable Top-25 Pairs}} \\times 100\\%$$\n\n"
-        "---\n\n"
-        f"## 2. View 1: `popular_benchmarks` ({len(pop)} Flagship Benchmarks — 18.9% Mean Contradiction, `64 / 339` Pairs)\n\n"
+        f"## Popular Benchmarks ({len(pop)} Benchmarks)\n\n"
         f"{make_table(pop)}\n\n"
         "---\n\n"
-        f"## 3. View 2: `ALL` ({len(all_b)} Evaluated Benchmarks Across 9 Suites — 15.8% Mean Contradiction, `167 / 1,055` Pairs)\n\n"
-        "<details>\n<summary><strong>Click to expand full 143-row table (ALL view)</strong></summary>\n\n"
+        f"## All Benchmarks ({len(all_b)} Benchmarks)\n\n"
+        f"<details>\n<summary><strong>Expand all {len(all_b)} benchmarks</strong></summary>\n\n"
         f"{make_table(all_b)}\n\n"
-        "</details>\n\n"
-        "---\n\n"
-        "## 4. Single Best Way to Host, Share & Customize\n\n"
-        "1. **One-Command Static Hosting (Cloudflare Pages / Vercel / GitHub Pages)**:\n"
-        "   Because [index.html](file:///Users/sagar-sayali/ai-benchmark-contradiction-index/index.html) and the single-file bundle [shareable_table.html](file:///Users/sagar-sayali/ai-benchmark-contradiction-index/shareable_table.html) are 100% static with zero build step, deploy globally in one command:\n"
-        "   ```bash\n"
-        "   npx wrangler pages deploy /Users/sagar-sayali/ai-benchmark-contradiction-index --project-name ai-benchmark-contradiction-index\n"
-        "   # OR\n"
-        "   npx vercel --prod /Users/sagar-sayali/ai-benchmark-contradiction-index\n"
-        "   ```\n"
-        "2. **Two-View URL Sharing (`popular_benchmarks` vs `ALL`)**:\n"
-        "   - Default view (`popular_benchmarks`): `?view=popular_benchmarks`\n"
-        "   - Full catalog (`ALL`): `?view=ALL`\n"
-        "3. **Customizing `popular_benchmarks`**:\n"
-        "   - **In the UI**: Click **Customize Popular** in the top bar of [index.html](file:///Users/sagar-sayali/ai-benchmark-contradiction-index/index.html) to check/uncheck any benchmark, or click **Copy Markdown** to copy the current table as GitHub Markdown.\n"
-        "   - **In Code**: Edit [`POPULAR_BENCHMARK_IDS`](file:///Users/sagar-sayali/ai-benchmark-contradiction-index/generate_all_benchmarks_data.py#L10-L60) in [generate_all_benchmarks_data.py](file:///Users/sagar-sayali/ai-benchmark-contradiction-index/generate_all_benchmarks_data.py) and run `python3 generate_all_benchmarks_data.py`.\n"
+        "</details>\n"
     )
     readme_path = os.path.join(BASE_DIR, 'README.md')
     with open(readme_path, 'w', encoding='utf-8') as f:
         f.write(readme_md)
     print(f"Saved clean Markdown report to {readme_path}")
-
-    # Print summary table sorted by Canonical Top-25 Contradiction Score
-    print("\n=== TOP 35 MOST CONTRADICTORY BENCHMARKS (Canonical Top-25 Mode) ===")
-    sorted_can = sorted(benchmarks, key=lambda b: (b['canonical_top25']['contradiction_score'], b['canonical_top25']['contradictions_count']), reverse=True)
-    for i, b in enumerate(sorted_can[:35], 1):
-        c = b['canonical_top25']
-        r = b['raw_top25']
-        print(f"{i:2d}. [{b['metric_type'].upper():7s}] {b['name']:46s} | Canonical: {c['contradiction_score']:5.1f}% ({c['contradictions_count']:2d}/{c['comparable_pairs_count']:2d}) | Raw: {r['contradiction_score']:5.1f}% ({r['contradictions_count']:2d}/{r['comparable_pairs_count']:2d})")
-
-    print("\n=== TOP 35 MOST CONTRADICTORY BENCHMARKS (Raw Top-25 Mode) ===")
-    sorted_raw = sorted(benchmarks, key=lambda b: (b['raw_top25']['contradiction_score'], b['raw_top25']['contradictions_count']), reverse=True)
-    for i, b in enumerate(sorted_raw[:35], 1):
-        c = b['canonical_top25']
-        r = b['raw_top25']
-        print(f"{i:2d}. [{b['metric_type'].upper():7s}] {b['name']:46s} | Raw: {r['contradiction_score']:5.1f}% ({r['contradictions_count']:2d}/{r['comparable_pairs_count']:2d}) | Canonical: {c['contradiction_score']:5.1f}% ({c['contradictions_count']:2d}/{c['comparable_pairs_count']:2d})")
 
 if __name__ == '__main__':
     build_all_benchmarks()

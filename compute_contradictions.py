@@ -41,72 +41,9 @@ def parse_simple_yml_list(path):
     if curr: entries.append(curr)
     return entries
 
-def evaluate_ranking(items, metric_type='quality', higher_is_better=True, top_k=25, deduplicate_canonical=True, include_version_axis=True, include_effort_axis=True):
-    """
-    items: list of {'name': str, 'score': float, 'is_reasoning': bool (optional), 'is_first_party': bool (optional)}
-    """
-    valid_items = []
-    for x in items:
-        sc = x.get('score')
-        if sc is None or isinstance(sc, str):
-            continue
-        try:
-            sc_f = float(sc)
-        except Exception:
-            continue
-        p = parse_model(x['name'], x.get('is_reasoning'))
-        if p and p.get('variant_tag') in ('Fast', 'Ultrafast', 'Flex'):
-            continue
-        valid_items.append({
-            'name': x['name'],
-            'score': sc_f,
-            'parsed': p,
-            'is_first_party': bool(x.get('is_first_party', True))
-        })
-
-    if deduplicate_canonical:
-        # Group by canonical (family, version, tier) or raw name if unparsed
-        # Pick the flagship configuration: first_party=True, highest effort_rank, then best score
-        groups = {}
-        for x in valid_items:
-            p = x['parsed']
-            key = (p['family'], p['version'], p['tier']) if p else ('__unparsed__', x['name'])
-            groups.setdefault(key, []).append(x)
-
-        deduped = []
-        for key, grp in groups.items():
-            if key[0] == '__unparsed__':
-                grp.sort(key=lambda item: item['score'], reverse=higher_is_better)
-                deduped.append(grp[0])
-            else:
-                # Sort by: is_first_party DESC, effort_rank DESC, then score in benchmark direction
-                grp.sort(key=lambda item: (
-                    1 if item['is_first_party'] else 0,
-                    item['parsed']['effort_rank'],
-                    item['score'] if higher_is_better else -item['score']
-                ), reverse=True)
-                deduped.append(grp[0])
-        working_items = deduped
-    else:
-        # Deduplicate exact model name (picking first_party first)
-        by_name = {}
-        for x in valid_items:
-            by_name.setdefault(x['name'], []).append(x)
-        working_items = []
-        for nm, grp in by_name.items():
-            grp.sort(key=lambda item: (1 if item['is_first_party'] else 0, item['score'] if higher_is_better else -item['score']), reverse=True)
-            working_items.append(grp[0])
-
-    # Sort into benchmark ranking order (#1 best at index 0)
-    working_items.sort(key=lambda x: x['score'], reverse=higher_is_better)
-    enriched = working_items[:top_k]
-
-    for idx, item in enumerate(enriched):
-        item['rank'] = idx + 1
-
+def _run_pairwise(enriched, metric_type, higher_is_better, canonical_mode, include_version_axis=True):
     comparable_pairs = []
     contradictions = []
-
     n = len(enriched)
     for i in range(n):
         for j in range(i + 1, n):
@@ -127,10 +64,9 @@ def evaluate_ranking(items, metric_type='quality', higher_is_better=True, top_k=
             larger_or_newer = None
             smaller_or_older = None
 
-            if deduplicate_canonical:
-                # Axis 1: Intra-Version Tier comparison (same version, different tier)
+            if canonical_mode:
+                # Rule 1: Same-generation tier comparison (same version, different size tier)
                 if same_v and not same_s and p1['tier_rank'] != p2['tier_rank']:
-                    # For Latency/Cost, don't compare if one is explicitly Non-Reasoning (1.0) and the other is heavy Reasoning (>=3.5)
                     if metric_type in ('latency', 'cost'):
                         if (p1['effort_rank'] == 1.0 and p2['effort_rank'] >= 3.5) or (p2['effort_rank'] == 1.0 and p1['effort_rank'] >= 3.5):
                             continue
@@ -138,15 +74,13 @@ def evaluate_ranking(items, metric_type='quality', higher_is_better=True, top_k=
                         larger_or_newer, smaller_or_older = m1, m2
                     else:
                         larger_or_newer, smaller_or_older = m2, m1
-                    # Product partial order: if both specify explicit effort (>1.0), don't compare if larger model was run at strictly lower effort than smaller model!
                     pa, pb = larger_or_newer['parsed'], smaller_or_older['parsed']
-                    if pa['effort_rank'] > 1.0 and pb['effort_rank'] > 1.0 and pa['effort_rank'] != pb['effort_rank']:
+                    if pa['effort_rank'] > 1.0 and pb['effort_rank'] > 1.0 and pa['effort_rank'] < pb['effort_rank']:
                         continue
                     axis = 'tier'
-                # Axis 2: Inter-Version Same-Tier comparison (same tier, different version)
+                # Rule 2: Cross-generation same-tier comparison (same size tier, different version)
                 elif include_version_axis and same_s and not same_v:
                     if metric_type == 'quality':
-                        # Don't compare if one is explicitly Non-Reasoning and the other is heavy Reasoning
                         if (p1['effort_rank'] == 1.0 and p2['effort_rank'] >= 3.5) or (p2['effort_rank'] == 1.0 and p1['effort_rank'] >= 3.5):
                             continue
                         if p1['version'] > p2['version']:
@@ -154,12 +88,11 @@ def evaluate_ranking(items, metric_type='quality', higher_is_better=True, top_k=
                         else:
                             larger_or_newer, smaller_or_older = m2, m1
                         pa, pb = larger_or_newer['parsed'], smaller_or_older['parsed']
-                        # If both specify explicit effort (>1.0) and newer model was run at strictly lower effort than older model, skip
                         if pa['effort_rank'] > 1.0 and pb['effort_rank'] > 1.0 and pa['effort_rank'] < pb['effort_rank']:
                             continue
                         axis = 'version'
             else:
-                # Raw Mode: exact Hamming-1 on (version, tier, effort)
+                # Same-effort Top-K leaderboard comparison on Rule 1 (tier) and Rule 2 (version)
                 if same_v and same_r and not same_s and p1['tier_rank'] != p2['tier_rank']:
                     axis = 'tier'
                     if p1['tier_rank'] > p2['tier_rank']:
@@ -173,12 +106,6 @@ def evaluate_ranking(items, metric_type='quality', higher_is_better=True, top_k=
                             larger_or_newer, smaller_or_older = m1, m2
                         else:
                             larger_or_newer, smaller_or_older = m2, m1
-                elif include_effort_axis and same_v and same_s and not same_r:
-                    axis = 'effort'
-                    if p1['effort_rank'] > p2['effort_rank']:
-                        larger_or_newer, smaller_or_older = m1, m2
-                    else:
-                        larger_or_newer, smaller_or_older = m2, m1
 
             if not axis:
                 continue
@@ -223,6 +150,88 @@ def evaluate_ranking(items, metric_type='quality', higher_is_better=True, top_k=
             if is_contradicted:
                 contradictions.append(pair_record)
 
+    return comparable_pairs, contradictions
+
+def evaluate_ranking(items, metric_type='quality', higher_is_better=True, top_k=50, deduplicate_canonical=True, include_version_axis=True, include_effort_axis=False):
+    """
+    Evaluates the Top-K (default Top 50) ranked models on a benchmark using the two strict intra-family rules:
+      1. Same-generation tier rule (e.g. GPT 6.1 Sol > GPT 6.1 Terra > GPT 6.1 Luna)
+      2. Cross-generation same-tier rule (e.g. GPT 6.1 Sol > GPT 6.0 Sol)
+    """
+    valid_items = []
+    for x in items:
+        sc = x.get('score')
+        if sc is None or isinstance(sc, str):
+            continue
+        try:
+            sc_f = float(sc)
+        except Exception:
+            continue
+        p = parse_model(x['name'], x.get('is_reasoning'))
+        if p and p.get('variant_tag') in ('Fast', 'Ultrafast', 'Flex'):
+            continue
+        valid_items.append({
+            'name': x['name'],
+            'score': sc_f,
+            'parsed': p,
+            'is_first_party': bool(x.get('is_first_party', True))
+        })
+
+    # 1. Build deduplicated exact-name list for raw Top-K
+    by_name = {}
+    for x in valid_items:
+        by_name.setdefault(x['name'], []).append(x)
+    raw_items = []
+    for nm, grp in by_name.items():
+        grp.sort(key=lambda item: (1 if item['is_first_party'] else 0, item['score'] if higher_is_better else -item['score']), reverse=True)
+        raw_items.append(dict(grp[0]))
+    raw_items.sort(key=lambda x: x['score'], reverse=higher_is_better)
+    raw_enriched = raw_items[:top_k]
+    for idx, item in enumerate(raw_enriched):
+        item['rank'] = idx + 1
+
+    # 2. Build canonical (family, version, tier) flagship list for canonical Top-K
+    groups = {}
+    for x in valid_items:
+        p = x['parsed']
+        key = (p['family'], p['version'], p['tier']) if p else ('__unparsed__', x['name'])
+        groups.setdefault(key, []).append(x)
+
+    deduped = []
+    for key, grp in groups.items():
+        if key[0] == '__unparsed__':
+            grp.sort(key=lambda item: item['score'], reverse=higher_is_better)
+            deduped.append(dict(grp[0]))
+        else:
+            grp.sort(key=lambda item: (
+                1 if item['is_first_party'] else 0,
+                item['parsed']['effort_rank'],
+                item['score'] if higher_is_better else -item['score']
+            ), reverse=True)
+            deduped.append(dict(grp[0]))
+    deduped.sort(key=lambda x: x['score'], reverse=higher_is_better)
+    can_enriched = deduped[:top_k]
+    for idx, item in enumerate(can_enriched):
+        item['rank'] = idx + 1
+
+    if deduplicate_canonical:
+        can_comp, _ = _run_pairwise(can_enriched, metric_type, higher_is_better, canonical_mode=True, include_version_axis=include_version_axis)
+        raw_comp, _ = _run_pairwise(raw_enriched, metric_type, higher_is_better, canonical_mode=False, include_version_axis=include_version_axis)
+
+        # Merge canonical Top-50 pairs with any additional same-effort Top-50 pairs (deduplicated by model names)
+        seen_pair_keys = set()
+        comparable_pairs = []
+        for p in can_comp + raw_comp:
+            pk = (p['model_a'], p['model_b'])
+            if pk not in seen_pair_keys:
+                seen_pair_keys.add(pk)
+                comparable_pairs.append(p)
+        contradictions = [p for p in comparable_pairs if p['contradicted']]
+        enriched = can_enriched
+    else:
+        comparable_pairs, contradictions = _run_pairwise(raw_enriched, metric_type, higher_is_better, canonical_mode=False, include_version_axis=include_version_axis)
+        enriched = raw_enriched
+
     total_comp = len(comparable_pairs)
     total_contra = len(contradictions)
     contra_score = (total_contra / total_comp * 100.0) if total_comp > 0 else 0.0
@@ -232,7 +241,7 @@ def evaluate_ranking(items, metric_type='quality', higher_is_better=True, top_k=
     weighted_score = (contra_disp / total_disp * 100.0) if total_disp > 0 else 0.0
 
     by_axis = {}
-    for ax in ('tier', 'version', 'effort'):
+    for ax in ('tier', 'version'):
         ax_comp = [p for p in comparable_pairs if p['axis'] == ax]
         ax_con = [p for p in contradictions if p['axis'] == ax]
         by_axis[ax] = {
