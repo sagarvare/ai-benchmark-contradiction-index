@@ -659,29 +659,35 @@ def build_all_benchmarks():
         return f"**{mb}** (#{p['rank_b']}, {sb}) ahead of **{ma}** (#{p['rank_a']}, {sa})"
 
     def make_table(benches):
-        benches = sorted(benches, key=lambda b: (b['canonical_top25']['contradictions_count'], b['canonical_top25']['comparable_pairs_count']), reverse=True)
+        benches = sorted(
+            benches,
+            key=lambda b: (
+                b['canonical_top25']['contradictions_count'],
+                -b['canonical_top25']['comparable_pairs_count'],
+                b['name']
+            )
+        )
         lines = [
-            '| # | Benchmark | Suite | Metric | Inverted Pairs | Comparable Pairs | Inverted Pairs in Top 50 |',
-            '| :-: | :--- | :--- | :--- | :-: | :-: | :--- |'
+            '| Benchmark | Inverted Score | Example Inversions in the Benchmark |',
+            '| :--- | :-: | :--- |'
         ]
-        for i, b in enumerate(benches, 1):
+        for b in benches:
             c = b['canonical_top25']
-            pol = 'Latency' if b['metric_type'] == 'latency' else ('Cost' if b['metric_type'] == 'cost' else 'Quality')
             if c['contradictions']:
-                ex = '; '.join(fmt_chip(p, b) for p in c['contradictions'][:2])
-                if len(c['contradictions']) > 2:
-                    ex += f" *(+{len(c['contradictions'])-2} more)*"
+                ex = '; '.join(fmt_chip(p, b) for p in c['contradictions'][:3])
+                if len(c['contradictions']) > 3:
+                    ex += f" *(+{len(c['contradictions'])-3} more)*"
             else:
-                ex = f"None (all {c['comparable_pairs_count']} pairs follow expected order)"
-            lines.append(f"| {i} | **{b['name']}** | {b['suite']} | {pol} | **{c['contradictions_count']}** | {c['comparable_pairs_count']} | {ex} |")
+                ex = "None"
+            lines.append(f"| **{b['name']}** | **{c['contradictions_count']}** | {ex} |")
         return '\n'.join(lines)
 
     pop = [b for b in benchmarks if b.get('is_popular')]
     all_b = [b for b in benchmarks if b['canonical_top25']['comparable_pairs_count'] > 0]
     readme_md = (
         "# AI Benchmark Inverted Pairs\n\n"
-        "- **Live Table (Popular Benchmarks)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks)\n"
-        "- **Live Table (All 144 Benchmarks)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL)\n"
+        "- **Live Table (Popular)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks)\n"
+        "- **Live Table (ALL)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL)\n"
         "- **Repository**: [https://github.com/sagarvare/ai-benchmark-contradiction-index](https://github.com/sagarvare/ai-benchmark-contradiction-index)\n\n"
         "This table measures the **count of inverted model pairs** within the **Top 50 ranked models** on each AI benchmark. "
         "A pair of models is counted as inverted when their relative ranking contradicts the expected ordering within the same model family under two rules:\n\n"
@@ -692,11 +698,11 @@ def build_all_benchmarks():
         "(for example, **GPT 6.1 Sol** ahead of **GPT 6.0 Sol**, or **Claude Opus 5.5** ahead of **Claude Opus 4.7**). "
         "Crossed pairs such as **GPT 6.1 Sol** and **GPT 6.0 Luna** are not compared.\n\n"
         "---\n\n"
-        f"## Popular Benchmarks ({len(pop)} Benchmarks)\n\n"
+        "## Popular\n\n"
         f"{make_table(pop)}\n\n"
         "---\n\n"
-        f"## All Benchmarks ({len(all_b)} Benchmarks)\n\n"
-        f"<details>\n<summary><strong>Expand all {len(all_b)} benchmarks</strong></summary>\n\n"
+        "## ALL\n\n"
+        "<details>\n<summary><strong>Expand ALL benchmarks</strong></summary>\n\n"
         f"{make_table(all_b)}\n\n"
         "</details>\n"
     )

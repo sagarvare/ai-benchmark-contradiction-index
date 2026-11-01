@@ -34,22 +34,8 @@
 
     <div class="toolbar">
       <div class="view-toggle" role="tablist" aria-label="Benchmark view">
-        <button type="button" id="btnPopular" class="toggle-btn active" data-view="popular_benchmarks">
-          Popular Benchmarks <span id="countPopular" class="count-label">(44)</span>
-        </button>
-        <button type="button" id="btnAll" class="toggle-btn" data-view="ALL">
-          All Benchmarks <span id="countAll" class="count-label">(144)</span>
-        </button>
-      </div>
-
-      <div class="toolbar-right">
-        <select id="metricFilter" aria-label="Filter by metric type">
-          <option value="all">All Metrics</option>
-          <option value="quality">Quality</option>
-          <option value="latency">Latency</option>
-          <option value="cost">Cost</option>
-        </select>
-        <input type="search" id="searchInput" placeholder="Search benchmark or model..." aria-label="Search benchmark or model" />
+        <button type="button" id="btnPopular" class="toggle-btn active" data-view="popular_benchmarks">Popular</button>
+        <button type="button" id="btnAll" class="toggle-btn" data-view="ALL">ALL</button>
       </div>
     </div>
 
@@ -57,12 +43,9 @@
       <table class="clean-table" id="benchmarksTable">
         <thead>
           <tr>
-            <th class="col-rank">#</th>
-            <th class="col-name sortable" data-sort="name">Benchmark</th>
-            <th class="col-metric">Metric</th>
-            <th class="col-num sortable active-sort" data-sort="inverted_desc">Inverted Pairs ↓</th>
-            <th class="col-num sortable" data-sort="comparable_desc">Comparable Pairs</th>
-            <th class="col-examples">Inverted Pairs in Top 50</th>
+            <th class="col-name">Benchmark</th>
+            <th class="col-score">Inverted Score</th>
+            <th class="col-examples">Example Inversions in the Benchmark</th>
           </tr>
         </thead>
         <tbody id="tableBody"></tbody>

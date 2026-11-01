@@ -17,7 +17,6 @@
   --text-secondary: #4b5563;
   --text-muted: #6b7280;
   --border: #e5e7eb;
-  --border-strong: #d1d5db;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -37,19 +36,18 @@ body {
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1080px;
   margin: 0 auto;
   padding: 40px 24px 72px;
 }
 
-/* Header & Rules */
 .page-header {
-  max-width: 880px;
-  margin-bottom: 28px;
+  max-width: 840px;
+  margin-bottom: 24px;
 }
 
 .page-header h1 {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text-main);
@@ -57,9 +55,9 @@ body {
 }
 
 .intro {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--text-secondary);
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .rules-list {
@@ -76,14 +74,8 @@ body {
   font-weight: 600;
 }
 
-/* Toolbar */
 .toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
+  margin-bottom: 12px;
 }
 
 .view-toggle {
@@ -97,14 +89,13 @@ body {
 .toggle-btn {
   background: transparent;
   border: none;
-  padding: 6px 14px;
+  padding: 6px 16px;
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.12s ease, color 0.12s ease;
 }
 
 .toggle-btn:hover {
@@ -118,40 +109,6 @@ body {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
-.count-label {
-  color: var(--text-muted);
-  font-weight: 400;
-  margin-left: 2px;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.toolbar-right select,
-.toolbar-right input {
-  font-family: var(--font-sans);
-  font-size: 13px;
-  color: var(--text-main);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 7px 12px;
-  outline: none;
-}
-
-.toolbar-right input {
-  width: 240px;
-}
-
-.toolbar-right select:focus,
-.toolbar-right input:focus {
-  border-color: #9ca3af;
-}
-
-/* Table */
 .table-wrapper {
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -174,33 +131,14 @@ body {
   padding: 11px 16px;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
-  user-select: none;
 }
 
-.clean-table thead th.sortable {
-  cursor: pointer;
-}
-
-.clean-table thead th.sortable:hover {
-  color: var(--text-main);
-}
-
-.clean-table thead th.active-sort {
-  color: var(--text-main);
-}
-
-.clean-table tbody tr.bench-row {
+.clean-table tbody tr {
   border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  transition: background-color 0.1s ease;
 }
 
-.clean-table tbody tr.bench-row:last-child {
+.clean-table tbody tr:last-child {
   border-bottom: none;
-}
-
-.clean-table tbody tr.bench-row:hover {
-  background: var(--bg-hover);
 }
 
 .clean-table td {
@@ -208,56 +146,17 @@ body {
   vertical-align: top;
 }
 
-.col-rank {
-  width: 48px;
-  color: var(--text-muted);
-  text-align: right;
-  padding-right: 12px !important;
-}
-
 .col-name {
-  width: 280px;
-}
-
-.bench-title {
-  font-weight: 600;
-  color: var(--text-main);
-  font-size: 14px;
-}
-
-.bench-suite {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.col-metric {
-  width: 90px;
-  color: var(--text-secondary);
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.col-num {
-  width: 130px;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.num-inverted {
-  font-size: 15px;
-  font-weight: 600;
+  width: 300px;
+  font-weight: 500;
   color: var(--text-main);
 }
 
-.num-inverted.zero {
-  color: var(--text-muted);
-  font-weight: 400;
-}
-
-.num-comparable {
-  font-size: 14px;
-  color: var(--text-secondary);
+.col-score {
+  width: 120px;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
 }
 
 .col-examples {
@@ -270,7 +169,7 @@ body {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .pair-item strong {
@@ -280,16 +179,6 @@ body {
 
 .pair-meta {
   color: var(--text-muted);
-  font-size: 12px;
-}
-
-.more-toggle {
-  display: inline-block;
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--text-muted);
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .none-label {
@@ -299,9 +188,6 @@ body {
 @media (max-width: 768px) {
   .container {
     padding: 24px 16px 48px;
-  }
-  .toolbar-right input {
-    width: 180px;
   }
 }
 
@@ -331,22 +217,8 @@ body {
 
     <div class="toolbar">
       <div class="view-toggle" role="tablist" aria-label="Benchmark view">
-        <button type="button" id="btnPopular" class="toggle-btn active" data-view="popular_benchmarks">
-          Popular Benchmarks <span id="countPopular" class="count-label">(44)</span>
-        </button>
-        <button type="button" id="btnAll" class="toggle-btn" data-view="ALL">
-          All Benchmarks <span id="countAll" class="count-label">(144)</span>
-        </button>
-      </div>
-
-      <div class="toolbar-right">
-        <select id="metricFilter" aria-label="Filter by metric type">
-          <option value="all">All Metrics</option>
-          <option value="quality">Quality</option>
-          <option value="latency">Latency</option>
-          <option value="cost">Cost</option>
-        </select>
-        <input type="search" id="searchInput" placeholder="Search benchmark or model..." aria-label="Search benchmark or model" />
+        <button type="button" id="btnPopular" class="toggle-btn active" data-view="popular_benchmarks">Popular</button>
+        <button type="button" id="btnAll" class="toggle-btn" data-view="ALL">ALL</button>
       </div>
     </div>
 
@@ -354,12 +226,9 @@ body {
       <table class="clean-table" id="benchmarksTable">
         <thead>
           <tr>
-            <th class="col-rank">#</th>
-            <th class="col-name sortable" data-sort="name">Benchmark</th>
-            <th class="col-metric">Metric</th>
-            <th class="col-num sortable active-sort" data-sort="inverted_desc">Inverted Pairs ↓</th>
-            <th class="col-num sortable" data-sort="comparable_desc">Comparable Pairs</th>
-            <th class="col-examples">Inverted Pairs in Top 50</th>
+            <th class="col-name">Benchmark</th>
+            <th class="col-score">Inverted Score</th>
+            <th class="col-examples">Example Inversions in the Benchmark</th>
           </tr>
         </thead>
         <tbody id="tableBody"></tbody>
@@ -381,14 +250,8 @@ window.CONTRADICTION_BENCHMARKS_DATA = {"generatedAt":"2026-11-01","totalBenchma
   );
 
   const urlParams = new URLSearchParams(window.location.search);
-  const initialView = urlParams.get('view') === 'ALL' ? 'ALL' : 'popular_benchmarks';
-
   const state = {
-    view: initialView, // 'popular_benchmarks' | 'ALL'
-    metric: 'all',     // 'all' | 'quality' | 'latency' | 'cost'
-    search: '',
-    sortBy: 'inverted_desc',
-    expandedIds: new Set()
+    view: urlParams.get('view') === 'ALL' ? 'ALL' : 'popular_benchmarks'
   };
 
   function cleanModelName(raw) {
@@ -421,7 +284,6 @@ window.CONTRADICTION_BENCHMARKS_DATA = {"generatedAt":"2026-11-01","totalBenchma
     if (metricType === 'latency' && u.includes('sec')) {
       return num < 10 ? num.toFixed(2) + 's' : num.toFixed(1) + 's';
     }
-    if (Math.abs(num) >= 100) return num.toFixed(1);
     if (Math.abs(num) >= 10) return num.toFixed(1);
     return Number(num.toFixed(3)).toString();
   }
@@ -441,213 +303,99 @@ window.CONTRADICTION_BENCHMARKS_DATA = {"generatedAt":"2026-11-01","totalBenchma
     return `<li class="pair-item"><strong>${mB}</strong> <span class="pair-meta">(#${p.rank_b}, ${sB})</span> ahead of <strong>${mA}</strong> <span class="pair-meta">(#${p.rank_a}, ${sA})</span></li>`;
   }
 
-  function formatMetricLabel(metricType) {
-    if (metricType === 'latency') return 'Latency';
-    if (metricType === 'cost') return 'Cost';
-    return 'Quality';
-  }
-
-  function getFilteredAndSorted() {
-    const q = state.search.trim().toLowerCase();
-    let list = allBenchmarks.filter(b => {
+  function getSortedBenchmarks() {
+    const list = allBenchmarks.filter(b => {
       const c = b.canonical_top25;
       if (!c || c.comparable_pairs_count < 1) return false;
       if (state.view === 'popular_benchmarks' && !POPULAR_IDS.has(b.id)) return false;
-      if (state.metric !== 'all' && b.metric_type !== state.metric) return false;
-      if (q) {
-        const matchBench =
-          b.name.toLowerCase().includes(q) ||
-          b.suite.toLowerCase().includes(q) ||
-          (b.category || '').toLowerCase().includes(q);
-        const matchModel = (c.contradictions || []).some(
-          p =>
-            p.model_a.toLowerCase().includes(q) ||
-            p.model_b.toLowerCase().includes(q) ||
-            (p.family || '').toLowerCase().includes(q)
-        );
-        if (!matchBench && !matchModel) return false;
-      }
       return true;
     });
 
+    // Sort low to high by Inverted Score (contradictions_count ascending),
+    // tiebroken by comparable_pairs_count descending, then name ascending
     list.sort((a, b) => {
       const ca = a.canonical_top25;
       const cb = b.canonical_top25;
-      if (state.sortBy === 'inverted_desc') {
-        if (cb.contradictions_count !== ca.contradictions_count) return cb.contradictions_count - ca.contradictions_count;
-        if (cb.comparable_pairs_count !== ca.comparable_pairs_count) return cb.comparable_pairs_count - ca.comparable_pairs_count;
-        return a.name.localeCompare(b.name);
+      if (ca.contradictions_count !== cb.contradictions_count) {
+        return ca.contradictions_count - cb.contradictions_count;
       }
-      if (state.sortBy === 'inverted_asc') {
-        if (ca.contradictions_count !== cb.contradictions_count) return ca.contradictions_count - cb.contradictions_count;
-        if (cb.comparable_pairs_count !== ca.comparable_pairs_count) return cb.comparable_pairs_count - ca.comparable_pairs_count;
-        return a.name.localeCompare(b.name);
+      if (cb.comparable_pairs_count !== ca.comparable_pairs_count) {
+        return cb.comparable_pairs_count - ca.comparable_pairs_count;
       }
-      if (state.sortBy === 'comparable_desc') {
-        if (cb.comparable_pairs_count !== ca.comparable_pairs_count) return cb.comparable_pairs_count - ca.comparable_pairs_count;
-        return cb.contradictions_count - ca.contradictions_count;
-      }
-      if (state.sortBy === 'comparable_asc') {
-        if (ca.comparable_pairs_count !== cb.comparable_pairs_count) return ca.comparable_pairs_count - cb.comparable_pairs_count;
-        return cb.contradictions_count - ca.contradictions_count;
-      }
-      if (state.sortBy === 'name') {
-        return a.name.localeCompare(b.name);
-      }
-      return 0;
+      return a.name.localeCompare(b.name);
     });
 
     return list;
   }
 
-  function updateHeaderCounts() {
-    const validAll = allBenchmarks.filter(b => b.canonical_top25 && b.canonical_top25.comparable_pairs_count >= 1);
-    const validPop = validAll.filter(b => POPULAR_IDS.has(b.id));
-    document.getElementById('countPopular').textContent = `(${validPop.length})`;
-    document.getElementById('countAll').textContent = `(${validAll.length})`;
-  }
-
-  function renderTable() {
-    const rows = getFilteredAndSorted();
-    const tbody = document.getElementById('tableBody');
-
-    if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 32px; color:#6b7280;">No matching benchmarks found.</td></tr>`;
-      return;
+  function render() {
+    const btnPop = document.getElementById('btnPopular');
+    const btnAll = document.getElementById('btnAll');
+    if (btnPop && btnAll) {
+      btnPop.classList.toggle('active', state.view === 'popular_benchmarks');
+      btnAll.classList.toggle('active', state.view === 'ALL');
     }
 
-    const html = [];
-    rows.forEach((b, idx) => {
+    const list = getSortedBenchmarks();
+    const tbody = document.getElementById('tableBody');
+    if (!tbody) return;
+
+    const rowsHtml = list.map(b => {
       const c = b.canonical_top25;
-      const invCount = c.contradictions_count;
-      const compCount = c.comparable_pairs_count;
-      const contras = c.contradictions || [];
-      const isExpanded = state.expandedIds.has(b.id);
+      const inv = c.contradictions_count;
+      const pairs = c.contradictions || [];
 
       let examplesHtml = '';
-      if (contras.length === 0) {
-        examplesHtml = `<span class="none-label">None (all ${compCount} pairs follow expected order)</span>`;
+      if (pairs.length === 0) {
+        examplesHtml = `<span class="none-label">None</span>`;
       } else {
-        const visible = isExpanded ? contras : contras.slice(0, 2);
-        const itemsHtml = visible.map(p => formatPairItem(p, b)).join('');
-        let moreHtml = '';
-        if (contras.length > 2) {
-          moreHtml = isExpanded
-            ? `<span class="more-toggle">Show fewer</span>`
-            : `<span class="more-toggle">Show all ${contras.length} inverted pairs</span>`;
-        }
-        examplesHtml = `<ul class="pair-list">${itemsHtml}</ul>${moreHtml}`;
+        const shown = pairs.slice(0, 3);
+        const itemsHtml = shown.map(p => formatPairItem(p, b)).join('');
+        const extra = pairs.length > 3
+          ? `<li class="pair-meta">+${pairs.length - 3} more</li>`
+          : '';
+        examplesHtml = `<ul class="pair-list">${itemsHtml}${extra}</ul>`;
       }
 
-      html.push(`
-        <tr class="bench-row" data-id="${escapeHtml(b.id)}">
-          <td class="col-rank">${idx + 1}</td>
-          <td class="col-name">
-            <div class="bench-title">${escapeHtml(b.name)}</div>
-            <div class="bench-suite">${escapeHtml(b.suite)}</div>
-          </td>
-          <td class="col-metric">${formatMetricLabel(b.metric_type)}</td>
-          <td class="col-num">
-            <span class="num-inverted ${invCount === 0 ? 'zero' : ''}">${invCount}</span>
-          </td>
-          <td class="col-num">
-            <span class="num-comparable">${compCount}</span>
-          </td>
+      return `
+        <tr>
+          <td class="col-name">${escapeHtml(b.name)}</td>
+          <td class="col-score">${inv}</td>
           <td class="col-examples">${examplesHtml}</td>
         </tr>
-      `);
-    });
+      `;
+    }).join('');
 
-    tbody.innerHTML = html.join('');
+    tbody.innerHTML = rowsHtml;
+  }
 
-    tbody.querySelectorAll('tr.bench-row').forEach(tr => {
-      tr.addEventListener('click', () => {
-        const id = tr.getAttribute('data-id');
-        if (state.expandedIds.has(id)) {
-          state.expandedIds.delete(id);
-        } else {
-          state.expandedIds.add(id);
-        }
-        renderTable();
+  function bindEvents() {
+    const btnPop = document.getElementById('btnPopular');
+    const btnAll = document.getElementById('btnAll');
+
+    if (btnPop) {
+      btnPop.addEventListener('click', () => {
+        state.view = 'popular_benchmarks';
+        const url = new URL(window.location);
+        url.searchParams.set('view', 'popular_benchmarks');
+        window.history.replaceState({}, '', url);
+        render();
       });
-    });
-  }
+    }
 
-  function updateSortHeaders() {
-    document.querySelectorAll('#benchmarksTable thead th.sortable').forEach(th => {
-      th.classList.remove('active-sort');
-      const base = th.getAttribute('data-sort');
-      if (base === 'name') {
-        th.textContent = state.sortBy === 'name' ? 'Benchmark ↑' : 'Benchmark';
-        if (state.sortBy === 'name') th.classList.add('active-sort');
-      } else if (base === 'inverted_desc') {
-        if (state.sortBy === 'inverted_desc') {
-          th.textContent = 'Inverted Pairs ↓';
-          th.classList.add('active-sort');
-        } else if (state.sortBy === 'inverted_asc') {
-          th.textContent = 'Inverted Pairs ↑';
-          th.classList.add('active-sort');
-        } else {
-          th.textContent = 'Inverted Pairs';
-        }
-      } else if (base === 'comparable_desc') {
-        if (state.sortBy === 'comparable_desc') {
-          th.textContent = 'Comparable Pairs ↓';
-          th.classList.add('active-sort');
-        } else if (state.sortBy === 'comparable_asc') {
-          th.textContent = 'Comparable Pairs ↑';
-          th.classList.add('active-sort');
-        } else {
-          th.textContent = 'Comparable Pairs';
-        }
-      }
-    });
-  }
-
-  function setView(v) {
-    state.view = v;
-    document.getElementById('btnPopular').classList.toggle('active', v === 'popular_benchmarks');
-    document.getElementById('btnAll').classList.toggle('active', v === 'ALL');
-    const url = new URL(window.location.href);
-    url.searchParams.set('view', v);
-    window.history.replaceState({}, '', url.toString());
-    renderTable();
-  }
-
-  function init() {
-    updateHeaderCounts();
-    setView(state.view);
-
-    document.getElementById('btnPopular').addEventListener('click', () => setView('popular_benchmarks'));
-    document.getElementById('btnAll').addEventListener('click', () => setView('ALL'));
-
-    document.getElementById('metricFilter').addEventListener('change', e => {
-      state.metric = e.target.value;
-      renderTable();
-    });
-
-    document.getElementById('searchInput').addEventListener('input', e => {
-      state.search = e.target.value;
-      renderTable();
-    });
-
-    document.querySelectorAll('#benchmarksTable thead th.sortable').forEach(th => {
-      th.addEventListener('click', () => {
-        const col = th.getAttribute('data-sort');
-        if (col === 'inverted_desc') {
-          state.sortBy = state.sortBy === 'inverted_desc' ? 'inverted_asc' : 'inverted_desc';
-        } else if (col === 'comparable_desc') {
-          state.sortBy = state.sortBy === 'comparable_desc' ? 'comparable_asc' : 'comparable_desc';
-        } else if (col === 'name') {
-          state.sortBy = 'name';
-        }
-        updateSortHeaders();
-        renderTable();
+    if (btnAll) {
+      btnAll.addEventListener('click', () => {
+        state.view = 'ALL';
+        const url = new URL(window.location);
+        url.searchParams.set('view', 'ALL');
+        window.history.replaceState({}, '', url);
+        render();
       });
-    });
+    }
   }
 
-  init();
+  bindEvents();
+  render();
 })();
 
 </script>

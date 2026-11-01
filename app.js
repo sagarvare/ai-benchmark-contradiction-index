@@ -9,14 +9,8 @@
   );
 
   const urlParams = new URLSearchParams(window.location.search);
-  const initialView = urlParams.get('view') === 'ALL' ? 'ALL' : 'popular_benchmarks';
-
   const state = {
-    view: initialView, // 'popular_benchmarks' | 'ALL'
-    metric: 'all',     // 'all' | 'quality' | 'latency' | 'cost'
-    search: '',
-    sortBy: 'inverted_desc',
-    expandedIds: new Set()
+    view: urlParams.get('view') === 'ALL' ? 'ALL' : 'popular_benchmarks'
   };
 
   function cleanModelName(raw) {
@@ -49,7 +43,6 @@
     if (metricType === 'latency' && u.includes('sec')) {
       return num < 10 ? num.toFixed(2) + 's' : num.toFixed(1) + 's';
     }
-    if (Math.abs(num) >= 100) return num.toFixed(1);
     if (Math.abs(num) >= 10) return num.toFixed(1);
     return Number(num.toFixed(3)).toString();
   }
@@ -69,211 +62,97 @@
     return `<li class="pair-item"><strong>${mB}</strong> <span class="pair-meta">(#${p.rank_b}, ${sB})</span> ahead of <strong>${mA}</strong> <span class="pair-meta">(#${p.rank_a}, ${sA})</span></li>`;
   }
 
-  function formatMetricLabel(metricType) {
-    if (metricType === 'latency') return 'Latency';
-    if (metricType === 'cost') return 'Cost';
-    return 'Quality';
-  }
-
-  function getFilteredAndSorted() {
-    const q = state.search.trim().toLowerCase();
-    let list = allBenchmarks.filter(b => {
+  function getSortedBenchmarks() {
+    const list = allBenchmarks.filter(b => {
       const c = b.canonical_top25;
       if (!c || c.comparable_pairs_count < 1) return false;
       if (state.view === 'popular_benchmarks' && !POPULAR_IDS.has(b.id)) return false;
-      if (state.metric !== 'all' && b.metric_type !== state.metric) return false;
-      if (q) {
-        const matchBench =
-          b.name.toLowerCase().includes(q) ||
-          b.suite.toLowerCase().includes(q) ||
-          (b.category || '').toLowerCase().includes(q);
-        const matchModel = (c.contradictions || []).some(
-          p =>
-            p.model_a.toLowerCase().includes(q) ||
-            p.model_b.toLowerCase().includes(q) ||
-            (p.family || '').toLowerCase().includes(q)
-        );
-        if (!matchBench && !matchModel) return false;
-      }
       return true;
     });
 
+    // Sort low to high by Inverted Score (contradictions_count ascending),
+    // tiebroken by comparable_pairs_count descending, then name ascending
     list.sort((a, b) => {
       const ca = a.canonical_top25;
       const cb = b.canonical_top25;
-      if (state.sortBy === 'inverted_desc') {
-        if (cb.contradictions_count !== ca.contradictions_count) return cb.contradictions_count - ca.contradictions_count;
-        if (cb.comparable_pairs_count !== ca.comparable_pairs_count) return cb.comparable_pairs_count - ca.comparable_pairs_count;
-        return a.name.localeCompare(b.name);
+      if (ca.contradictions_count !== cb.contradictions_count) {
+        return ca.contradictions_count - cb.contradictions_count;
       }
-      if (state.sortBy === 'inverted_asc') {
-        if (ca.contradictions_count !== cb.contradictions_count) return ca.contradictions_count - cb.contradictions_count;
-        if (cb.comparable_pairs_count !== ca.comparable_pairs_count) return cb.comparable_pairs_count - ca.comparable_pairs_count;
-        return a.name.localeCompare(b.name);
+      if (cb.comparable_pairs_count !== ca.comparable_pairs_count) {
+        return cb.comparable_pairs_count - ca.comparable_pairs_count;
       }
-      if (state.sortBy === 'comparable_desc') {
-        if (cb.comparable_pairs_count !== ca.comparable_pairs_count) return cb.comparable_pairs_count - ca.comparable_pairs_count;
-        return cb.contradictions_count - ca.contradictions_count;
-      }
-      if (state.sortBy === 'comparable_asc') {
-        if (ca.comparable_pairs_count !== cb.comparable_pairs_count) return ca.comparable_pairs_count - cb.comparable_pairs_count;
-        return cb.contradictions_count - ca.contradictions_count;
-      }
-      if (state.sortBy === 'name') {
-        return a.name.localeCompare(b.name);
-      }
-      return 0;
+      return a.name.localeCompare(b.name);
     });
 
     return list;
   }
 
-  function updateHeaderCounts() {
-    const validAll = allBenchmarks.filter(b => b.canonical_top25 && b.canonical_top25.comparable_pairs_count >= 1);
-    const validPop = validAll.filter(b => POPULAR_IDS.has(b.id));
-    document.getElementById('countPopular').textContent = `(${validPop.length})`;
-    document.getElementById('countAll').textContent = `(${validAll.length})`;
-  }
-
-  function renderTable() {
-    const rows = getFilteredAndSorted();
-    const tbody = document.getElementById('tableBody');
-
-    if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 32px; color:#6b7280;">No matching benchmarks found.</td></tr>`;
-      return;
+  function render() {
+    const btnPop = document.getElementById('btnPopular');
+    const btnAll = document.getElementById('btnAll');
+    if (btnPop && btnAll) {
+      btnPop.classList.toggle('active', state.view === 'popular_benchmarks');
+      btnAll.classList.toggle('active', state.view === 'ALL');
     }
 
-    const html = [];
-    rows.forEach((b, idx) => {
+    const list = getSortedBenchmarks();
+    const tbody = document.getElementById('tableBody');
+    if (!tbody) return;
+
+    const rowsHtml = list.map(b => {
       const c = b.canonical_top25;
-      const invCount = c.contradictions_count;
-      const compCount = c.comparable_pairs_count;
-      const contras = c.contradictions || [];
-      const isExpanded = state.expandedIds.has(b.id);
+      const inv = c.contradictions_count;
+      const pairs = c.contradictions || [];
 
       let examplesHtml = '';
-      if (contras.length === 0) {
-        examplesHtml = `<span class="none-label">None (all ${compCount} pairs follow expected order)</span>`;
+      if (pairs.length === 0) {
+        examplesHtml = `<span class="none-label">None</span>`;
       } else {
-        const visible = isExpanded ? contras : contras.slice(0, 2);
-        const itemsHtml = visible.map(p => formatPairItem(p, b)).join('');
-        let moreHtml = '';
-        if (contras.length > 2) {
-          moreHtml = isExpanded
-            ? `<span class="more-toggle">Show fewer</span>`
-            : `<span class="more-toggle">Show all ${contras.length} inverted pairs</span>`;
-        }
-        examplesHtml = `<ul class="pair-list">${itemsHtml}</ul>${moreHtml}`;
+        const shown = pairs.slice(0, 3);
+        const itemsHtml = shown.map(p => formatPairItem(p, b)).join('');
+        const extra = pairs.length > 3
+          ? `<li class="pair-meta">+${pairs.length - 3} more</li>`
+          : '';
+        examplesHtml = `<ul class="pair-list">${itemsHtml}${extra}</ul>`;
       }
 
-      html.push(`
-        <tr class="bench-row" data-id="${escapeHtml(b.id)}">
-          <td class="col-rank">${idx + 1}</td>
-          <td class="col-name">
-            <div class="bench-title">${escapeHtml(b.name)}</div>
-            <div class="bench-suite">${escapeHtml(b.suite)}</div>
-          </td>
-          <td class="col-metric">${formatMetricLabel(b.metric_type)}</td>
-          <td class="col-num">
-            <span class="num-inverted ${invCount === 0 ? 'zero' : ''}">${invCount}</span>
-          </td>
-          <td class="col-num">
-            <span class="num-comparable">${compCount}</span>
-          </td>
+      return `
+        <tr>
+          <td class="col-name">${escapeHtml(b.name)}</td>
+          <td class="col-score">${inv}</td>
           <td class="col-examples">${examplesHtml}</td>
         </tr>
-      `);
-    });
+      `;
+    }).join('');
 
-    tbody.innerHTML = html.join('');
+    tbody.innerHTML = rowsHtml;
+  }
 
-    tbody.querySelectorAll('tr.bench-row').forEach(tr => {
-      tr.addEventListener('click', () => {
-        const id = tr.getAttribute('data-id');
-        if (state.expandedIds.has(id)) {
-          state.expandedIds.delete(id);
-        } else {
-          state.expandedIds.add(id);
-        }
-        renderTable();
+  function bindEvents() {
+    const btnPop = document.getElementById('btnPopular');
+    const btnAll = document.getElementById('btnAll');
+
+    if (btnPop) {
+      btnPop.addEventListener('click', () => {
+        state.view = 'popular_benchmarks';
+        const url = new URL(window.location);
+        url.searchParams.set('view', 'popular_benchmarks');
+        window.history.replaceState({}, '', url);
+        render();
       });
-    });
-  }
+    }
 
-  function updateSortHeaders() {
-    document.querySelectorAll('#benchmarksTable thead th.sortable').forEach(th => {
-      th.classList.remove('active-sort');
-      const base = th.getAttribute('data-sort');
-      if (base === 'name') {
-        th.textContent = state.sortBy === 'name' ? 'Benchmark ↑' : 'Benchmark';
-        if (state.sortBy === 'name') th.classList.add('active-sort');
-      } else if (base === 'inverted_desc') {
-        if (state.sortBy === 'inverted_desc') {
-          th.textContent = 'Inverted Pairs ↓';
-          th.classList.add('active-sort');
-        } else if (state.sortBy === 'inverted_asc') {
-          th.textContent = 'Inverted Pairs ↑';
-          th.classList.add('active-sort');
-        } else {
-          th.textContent = 'Inverted Pairs';
-        }
-      } else if (base === 'comparable_desc') {
-        if (state.sortBy === 'comparable_desc') {
-          th.textContent = 'Comparable Pairs ↓';
-          th.classList.add('active-sort');
-        } else if (state.sortBy === 'comparable_asc') {
-          th.textContent = 'Comparable Pairs ↑';
-          th.classList.add('active-sort');
-        } else {
-          th.textContent = 'Comparable Pairs';
-        }
-      }
-    });
-  }
-
-  function setView(v) {
-    state.view = v;
-    document.getElementById('btnPopular').classList.toggle('active', v === 'popular_benchmarks');
-    document.getElementById('btnAll').classList.toggle('active', v === 'ALL');
-    const url = new URL(window.location.href);
-    url.searchParams.set('view', v);
-    window.history.replaceState({}, '', url.toString());
-    renderTable();
-  }
-
-  function init() {
-    updateHeaderCounts();
-    setView(state.view);
-
-    document.getElementById('btnPopular').addEventListener('click', () => setView('popular_benchmarks'));
-    document.getElementById('btnAll').addEventListener('click', () => setView('ALL'));
-
-    document.getElementById('metricFilter').addEventListener('change', e => {
-      state.metric = e.target.value;
-      renderTable();
-    });
-
-    document.getElementById('searchInput').addEventListener('input', e => {
-      state.search = e.target.value;
-      renderTable();
-    });
-
-    document.querySelectorAll('#benchmarksTable thead th.sortable').forEach(th => {
-      th.addEventListener('click', () => {
-        const col = th.getAttribute('data-sort');
-        if (col === 'inverted_desc') {
-          state.sortBy = state.sortBy === 'inverted_desc' ? 'inverted_asc' : 'inverted_desc';
-        } else if (col === 'comparable_desc') {
-          state.sortBy = state.sortBy === 'comparable_desc' ? 'comparable_asc' : 'comparable_desc';
-        } else if (col === 'name') {
-          state.sortBy = 'name';
-        }
-        updateSortHeaders();
-        renderTable();
+    if (btnAll) {
+      btnAll.addEventListener('click', () => {
+        state.view = 'ALL';
+        const url = new URL(window.location);
+        url.searchParams.set('view', 'ALL');
+        window.history.replaceState({}, '', url);
+        render();
       });
-    });
+    }
   }
 
-  init();
+  bindEvents();
+  render();
 })();
