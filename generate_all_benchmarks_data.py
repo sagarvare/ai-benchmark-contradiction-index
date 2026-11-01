@@ -68,8 +68,8 @@ def build_all_benchmarks():
         valid_cnt = sum(1 for x in items if x.get('score') is not None and not isinstance(x.get('score'), str))
         if valid_cnt < 10:
             return
-        res_canonical = evaluate_ranking(items, metric_type=metric_type, higher_is_better=higher_is_better, top_k=50, deduplicate_canonical=True)
-        res_raw = evaluate_ranking(items, metric_type=metric_type, higher_is_better=higher_is_better, top_k=50, deduplicate_canonical=False)
+        res_canonical = evaluate_ranking(items, metric_type=metric_type, higher_is_better=higher_is_better, top_k=100, deduplicate_canonical=True)
+        res_raw = evaluate_ranking(items, metric_type=metric_type, higher_is_better=higher_is_better, top_k=100, deduplicate_canonical=False)
         res_full = evaluate_ranking(items, metric_type=metric_type, higher_is_better=higher_is_better, top_k=250, deduplicate_canonical=True)
         benchmarks.append({
             'id': slug,
@@ -689,7 +689,7 @@ def build_all_benchmarks():
         "- **Live Table (Popular)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks)\n"
         "- **Live Table (ALL)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL)\n"
         "- **Repository**: [https://github.com/sagarvare/ai-benchmark-contradiction-index](https://github.com/sagarvare/ai-benchmark-contradiction-index)\n\n"
-        "This table measures the **count of inverted model pairs** within the **Top 50 ranked models** on each AI benchmark. "
+        "This table measures the **count of inverted model pairs** within the **Top 100 ranked models** on each AI benchmark. "
         "A pair of models is counted as inverted when their relative ranking contradicts the expected ordering within the same model family under two rules:\n\n"
         "1. **Same-generation tier rule:** Within the same model family and version, a larger tier is expected to rank ahead of a smaller tier "
         "(for example, **GPT 6.1 Sol** ahead of **GPT 6.1 Terra** ahead of **GPT 6.1 Luna**, or **Claude Opus 5.5** ahead of **Claude Sonnet 5.5** ahead of **Claude Haiku 5.5**). "

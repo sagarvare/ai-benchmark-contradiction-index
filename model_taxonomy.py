@@ -151,7 +151,7 @@ def parse_model(raw_name, is_reasoning_flag=None):
         }
 
     mo = re.search(r'\bo([134])(?:-?(pro|preview|mini))?\b', sl)
-    if mo and 'molmo' not in sl and 'olmo' not in sl and 'mimo' not in sl and 'nova' not in sl:
+    if mo and 'molmo' not in sl and 'olmo' not in sl and 'mimo' not in sl and 'nova' not in sl and 'programmer o1' not in sl:
         ver = float(mo.group(1))
         sub = mo.group(2) or 'base'
         if sub == 'preview':
@@ -212,24 +212,34 @@ def parse_model(raw_name, is_reasoning_flag=None):
         }
 
     # 3. GOOGLE GEMINI / GEMMA / VEO
-    if 'gemma' in sl and 'diffusiongemma' not in sl:
-        mgm = re.search(r'gemma[- ]*(\d+(?:\.\d+)?)', sl)
-        if mgm:
-            ver = float(mgm.group(1))
-            v_str = f"{ver:g}" if ver != int(ver) else f"{int(ver)}.0"
-            is_moe = bool(re.search(r'\ba\d+b\b', sl))
+    if 'gemma' in sl and 'diffusiongemma' not in sl and 'codegemma' not in sl:
+        if 'gemma-3n' in sl or 'gemma 3n' in sl:
             mp = re.search(r'(?:e)?(\d+(?:\.\d+)?)(b|m)\b', sl)
             if mp:
-                val = float(mp.group(1))
-                if mp.group(2) == 'm': val /= 1000.0
-                t_label = f"{mp.group(1).upper()}{mp.group(2).upper()}"
+                val = float(mp.group(1)) / (1000.0 if mp.group(2) == 'm' else 1.0)
                 return {
-                    'raw': raw_name, 'family': 'Google Gemma MoE' if is_moe else 'Google Gemma',
-                    'version': ver, 'version_str': v_str,
-                    'tier': t_label, 'tier_rank': val,
+                    'raw': raw_name, 'family': 'Google Gemma 3n',
+                    'version': 3.0, 'version_str': '3.0',
+                    'tier': f"{mp.group(1).upper()}{mp.group(2).upper()}", 'tier_rank': val,
                     'effort': effort_name, 'effort_rank': effort_rank,
                     'variant_tag': variant_tag
                 }
+        mgm = re.search(r'gemma[- ]*([1234](?:\.\d+)?)(?!\d*b)\b', sl)
+        ver = float(mgm.group(1)) if mgm else 1.0
+        v_str = f"{ver:g}" if ver != int(ver) else f"{int(ver)}.0"
+        is_moe = bool(re.search(r'\ba\d+b\b', sl))
+        mp = re.search(r'(?:e)?(\d+(?:\.\d+)?)(b|m)\b', sl)
+        if mp:
+            val = float(mp.group(1))
+            if mp.group(2) == 'm': val /= 1000.0
+            t_label = f"{mp.group(1).upper()}{mp.group(2).upper()}"
+            return {
+                'raw': raw_name, 'family': 'Google Gemma MoE' if is_moe else 'Google Gemma',
+                'version': ver, 'version_str': v_str,
+                'tier': t_label, 'tier_rank': val,
+                'effort': effort_name, 'effort_rank': effort_rank,
+                'variant_tag': variant_tag
+            }
 
     if 'gemini' in sl:
         if 'image' in sl or 'banana' in sl:
@@ -483,8 +493,15 @@ def parse_model(raw_name, is_reasoning_flag=None):
         elif 'medium' in sl: tier, tier_rank = 'Medium', 2.0
         elif 'small' in sl: tier, tier_rank = 'Small', 1.0
         if tier:
-            mm = re.search(r'(?:large|medium|small)[- ]*([1234](?:[.-]\d+)?)(?!\d*b)\b', sl)
-            ver = float(mm.group(1).replace('-', '.')) if mm else 3.0
+            mm = re.search(r'(?:large|medium|small)[- ]*([1234](?:[.-]\d+)?)(?!\d*b|\d{3})\b', sl)
+            if mm:
+                ver = float(mm.group(1).replace('-', '.'))
+            elif re.search(r'\b24(?:02|07|09|11)\b', sl) or '2024' in sl:
+                ver = 2.0
+            elif re.search(r'\b2312\b', sl) or '2023' in sl:
+                ver = 1.0
+            else:
+                ver = 3.0
             v_str = f"{ver:g}" if ver != int(ver) else f"{int(ver)}.0"
             return {
                 'raw': raw_name, 'family': 'Mistral',
@@ -582,18 +599,21 @@ def parse_model(raw_name, is_reasoning_flag=None):
                 'variant_tag': variant_tag
             }
 
-    # 14. NVIDIA NEMOTRON (exclude third-party fine-tunes like smaug-nemotron)
-    if 'nemotron' in sl and 'smaug' not in sl and 'llama 3.1 nemotron' not in sl:
+    # 14. NVIDIA NEMOTRON (exclude third-party fine-tunes like smaug-nemotron and llama-3.1-nemotron)
+    if 'nemotron' in sl and 'smaug' not in sl and 'llama 3.1 nemotron' not in sl and 'llama-3.1-nemotron' not in sl and 'llama-3.3-nemotron' not in sl:
         if 'v2' in sl:
             ver = 2.0
         else:
-            mn = re.search(r'nemotron[- ]*(?:super[- ]*vl[- ]*)?(\d+(?:\.\d+)?)', sl)
+            mn = re.search(r'nemotron[- ]*(?:super[- ]*vl[- ]*)?([1234](?:\.\d+)?)(?!\d*b)\b', sl)
             ver = float(mn.group(1)) if mn else 3.0
         v_str = f"{ver:g}" if ver != int(ver) else f"{int(ver)}.0"
         tier, tier_rank = '30B', 30.0
         if 'ultra' in sl: tier, tier_rank = 'Ultra', 550.0
+        elif '340b' in sl: tier, tier_rank = '340B', 340.0
         elif 'super' in sl: tier, tier_rank = 'Super', 120.0
         elif '74b' in sl: tier, tier_rank = '74B', 74.0
+        elif '70b' in sl: tier, tier_rank = '70B', 70.0
+        elif '51b' in sl or '49b' in sl: tier, tier_rank = '50B', 50.0
         elif '30b' in sl or 'lightning' in sl: tier, tier_rank = '30B', 30.0
         elif '12b' in sl: tier, tier_rank = '12B', 12.0
         elif '9b' in sl: tier, tier_rank = '9B', 9.0
@@ -718,10 +738,13 @@ def parse_model(raw_name, is_reasoning_flag=None):
         }
 
     if 'solar' in sl:
+        msol = re.search(r'(?:solar|pro|mini|open)[- ]*([1234](?:\.\d+)?)(?!\d*b)\b', sl)
+        ver = float(msol.group(1)) if msol else 1.0
+        v_str = f"{ver:g}" if ver != int(ver) else f"{int(ver)}.0"
         tier, tier_rank = ('Pro', 3.0) if 'pro' in sl else (('Mini', 1.0) if 'mini' in sl else ('Open', 2.0))
         return {
             'raw': raw_name, 'family': 'Upstage Solar',
-            'version': 4.0, 'version_str': '4.0',
+            'version': ver, 'version_str': v_str,
             'tier': tier, 'tier_rank': tier_rank,
             'effort': effort_name, 'effort_rank': effort_rank,
             'variant_tag': variant_tag

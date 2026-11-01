@@ -152,9 +152,9 @@ def _run_pairwise(enriched, metric_type, higher_is_better, canonical_mode, inclu
 
     return comparable_pairs, contradictions
 
-def evaluate_ranking(items, metric_type='quality', higher_is_better=True, top_k=50, deduplicate_canonical=True, include_version_axis=True, include_effort_axis=False):
+def evaluate_ranking(items, metric_type='quality', higher_is_better=True, top_k=100, deduplicate_canonical=True, include_version_axis=True, include_effort_axis=False):
     """
-    Evaluates the Top-K (default Top 50) ranked models on a benchmark using the two strict intra-family rules:
+    Evaluates the Top-K (default Top 100) ranked models on a benchmark using the two strict intra-family rules:
       1. Same-generation tier rule (e.g. GPT 6.1 Sol > GPT 6.1 Terra > GPT 6.1 Luna)
       2. Cross-generation same-tier rule (e.g. GPT 6.1 Sol > GPT 6.0 Sol)
     """
