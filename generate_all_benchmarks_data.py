@@ -90,24 +90,66 @@ def build_all_benchmarks():
     decoder = json.JSONDecoder()
 
     # =========================================================================
-    # 1. ARTIFICIAL ANALYSIS v5.0 (Oct 2026 Live — /leaderboards/models)
+    # 1. ARTIFICIAL ANALYSIS v5.0 (Oct 2026 Live — Full 719-Model Evaluation Database)
     # =========================================================================
     with open(os.path.join(CACHE_DIR, 'aa_leaderboards_models.html'), 'r', encoding='utf-8') as f:
         aa_lb_rsc = extract_rsc_json(f.read())
     idx = aa_lb_rsc.find('"initialModels":[')
     aa_lb_models, _ = decoder.raw_decode(aa_lb_rsc[idx + len('"initialModels":'):])
 
+    aa_full_path = os.path.join(CACHE_DIR, 'aa_full_evaluations_719_models.json')
+    if os.path.exists(aa_full_path):
+        with open(aa_full_path, 'r', encoding='utf-8') as f:
+            aa_all_models = json.load(f).get('models', [])
+    else:
+        aa_all_models = []
+
+    skey_to_model_key = {
+        'hle-diamond': 'hleDiamond',
+        'humanitys-last-exam': 'hle',
+        'gpqa-diamond': 'gpqa',
+        'aime-2025': 'aime25',
+        'critpt': 'critpt',
+        'critpt-v2-hard': 'critptAgenticHard',
+        'terminal-bench-science': 'terminalBenchScience',
+        'frontiercode-2-0': 'frontierCode20',
+        'frontiercode': 'frontierCode',
+        'terminalbench-4-0': 'terminalBench40',
+        'terminalbench-2-1': 'terminalBench21',
+        'terminalbench-hard': 'terminalbenchHard',
+        'scicode': 'scicode',
+        'livecodebench': 'livecodebench',
+        'code2video-aa': 'code2videoElo',
+        'aa-briefcase': 'briefcaseElo',
+        'gdpval-aa-normalized': 'gdpval',
+        'gdp-pdf': 'gdpPdfAllPass',
+        'automationbench-aa': 'automationBenchPartialScore',
+        'tau2-bench': 'tau2',
+        'tau3-banking': 'tauBanking',
+        'aa-analyst-agent': 'analystAgent',
+        'harvey-lab-aa': 'harveyLab',
+        'enterprise-ops-gym-aa': 'enterpriseOpsGym',
+        'itbench-aa': 'itbenchSre',
+        'artificial-analysis-long-context-reasoning': 'lcr',
+        'mlcr-aa': 'mlcrOverall',
+        'ifbench': 'ifbench',
+        'mmmu-pro': 'mmmuPro',
+        'healthbench': 'healthbench',
+        'healthbench-professional': 'healthbenchProfessional',
+    }
+
+    intel_source = aa_all_models if aa_all_models else aa_lb_models
     # Top-level metrics on aa_lb_models
     add_bench(
         'Artificial Analysis v5', 'Composite & Frontier', 'AA Intelligence Index v5.0', 'aa_v5_intelligence_index',
         'quality', True, 'Index (0-100)',
-        [{'name': m['name'], 'score': m.get('intelligenceIndex'), 'is_reasoning': m.get('isReasoning')} for m in aa_lb_models],
+        [{'name': m['name'], 'score': m.get('intelligenceIndex'), 'is_reasoning': m.get('isReasoning')} for m in intel_source if m.get('intelligenceIndex') is not None],
         'Flagship composite intelligence index across reasoning, coding, knowledge, and agentic evaluations.'
     )
     add_bench(
         'Artificial Analysis v5', 'Knowledge & Hallucination', 'AA-Omniscience v1.1 Net Score', 'aa_v5_omniscience_net',
         'quality', True, 'Net Score',
-        [{'name': m['name'], 'score': m.get('omniscience'), 'is_reasoning': m.get('isReasoning')} for m in aa_lb_models],
+        [{'name': m['name'], 'score': m.get('omniscience'), 'is_reasoning': m.get('isReasoning')} for m in intel_source if m.get('omniscience') is not None],
         '3,000-question knowledge & hallucination benchmark penalizing confident incorrect answers.'
     )
 
@@ -148,10 +190,18 @@ def build_all_benchmarks():
         ('healthbench-professional', 'Science & Math Reasoning', 'HealthBench Professional Clinical', 'quality', True, 'Score', 'Professional clinician-level medical case reasoning benchmark.'),
     ]
     for skey, cat, title, mtype, hib, unit, desc in aa_score_defs:
-        items = [
-            {'name': m['name'], 'score': (m.get('scores') or {}).get(skey), 'is_reasoning': m.get('isReasoning')}
-            for m in aa_lb_models
-        ]
+        if aa_all_models and skey in skey_to_model_key:
+            mkey = skey_to_model_key[skey]
+            items = [
+                {'name': m['name'], 'score': m[mkey], 'is_reasoning': m.get('isReasoning')}
+                for m in aa_all_models
+                if m.get(mkey) is not None and not isinstance(m.get(mkey), (bool, str, dict, list))
+            ]
+        else:
+            items = [
+                {'name': m['name'], 'score': (m.get('scores') or {}).get(skey), 'is_reasoning': m.get('isReasoning')}
+                for m in aa_lb_models
+            ]
         add_bench('Artificial Analysis v5', cat, title, f"aa_v5_{skey.replace('-', '_')}", mtype, hib, unit, items, desc)
 
     # AA v5 Cost & Reasoning Latency on /leaderboards/models
