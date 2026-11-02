@@ -46,24 +46,15 @@ POPULAR_BENCHMARK_IDS = {
     'aa_v5_mlcr_aa',
     'arena_2026_oct_vision',
     'aa_v5_healthbench',
-    # Latency / Speed (100% Flipped Expected Order: Luna < Terra < Sol)
-    'aa_v5_eval_time_frontiercode_2_0',
-    'aa_v5_eval_time_omniscience',
-    'aider_polyglot_latency',
-    'aa_v5_time_per_task',
-    'aa_v5_ttfat_seconds',
-    # Cost (Total Benchmark Run Cost & API Unit Price: Cost(Sol) >= Cost(Terra) >= Cost(Luna))
-    'aa_v5_eval_cost_frontiercode_2_0',
-    'lb2_cost_coding',
-    'aa_v5_eval_cost_omniscience',
-    'aa_v5_total_run_cost',
-    'aa_v5_price_blended',
 }
 
 def build_all_benchmarks():
     benchmarks = []
 
     def add_bench(suite, category, name, slug, metric_type, higher_is_better, unit, items, description=''):
+        # Keep only quality measuring benchmarks across all
+        if metric_type != 'quality':
+            return
         # Only add if at least 10 valid items
         valid_cnt = sum(1 for x in items if x.get('score') is not None and not isinstance(x.get('score'), str))
         if valid_cnt < 10:
@@ -689,7 +680,7 @@ def build_all_benchmarks():
         "- **Live Table (Popular)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks)\n"
         "- **Live Table (ALL)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL)\n"
         "- **Repository**: [https://github.com/sagarvare/ai-benchmark-contradiction-index](https://github.com/sagarvare/ai-benchmark-contradiction-index)\n\n"
-        "1. **Same-generation tier rule:** Larger tiers should rank ahead of smaller tiers within the same version (e.g., GPT 6.1 Sol > Terra > Luna; reversed for latency/cost).\n"
+        "1. **Same-generation tier rule:** Larger tiers should rank ahead of smaller tiers within the same version (e.g., GPT 6.1 Sol > Terra > Luna).\n"
         "2. **Cross-generation same-tier rule:** Newer versions should rank ahead of older versions within the same tier (e.g., GPT 6.1 Sol > GPT 6.0 Sol).\n\n"
         "---\n\n"
         "## Popular\n\n"
