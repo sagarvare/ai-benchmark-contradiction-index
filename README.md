@@ -4,10 +4,8 @@
 - **Live Table (ALL)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL)
 - **Repository**: [https://github.com/sagarvare/ai-benchmark-contradiction-index](https://github.com/sagarvare/ai-benchmark-contradiction-index)
 
-This table measures the **count of inverted model pairs** within the **Top 100 ranked models** on each AI benchmark. A pair of models is counted as inverted when their relative ranking contradicts the expected ordering within the same model family under two rules:
-
-1. **Same-generation tier rule:** Within the same model family and version, a larger tier is expected to rank ahead of a smaller tier (for example, **GPT 6.1 Sol** ahead of **GPT 6.1 Terra** ahead of **GPT 6.1 Luna**, or **Claude Opus 5.5** ahead of **Claude Sonnet 5.5** ahead of **Claude Haiku 5.5**). For latency benchmarks, this order is reversed so smaller models are expected to be faster. For cost benchmarks, larger models are expected to cost more.
-2. **Cross-generation same-tier rule:** Within the same model family and size tier, a newer version is expected to rank ahead of an older version (for example, **GPT 6.1 Sol** ahead of **GPT 6.0 Sol**, or **Claude Opus 5.5** ahead of **Claude Opus 4.7**). Crossed pairs such as **GPT 6.1 Sol** and **GPT 6.0 Luna** are not compared.
+1. **Same-generation tier rule:** Larger tiers should rank ahead of smaller tiers within the same version (e.g., GPT 6.1 Sol > Terra > Luna; reversed for latency/cost).
+2. **Cross-generation same-tier rule:** Newer versions should rank ahead of older versions within the same tier (e.g., GPT 6.1 Sol > GPT 6.0 Sol).
 
 ---
 

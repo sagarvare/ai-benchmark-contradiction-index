@@ -197,21 +197,9 @@ body {
   <main class="container">
     <header class="page-header">
       <h1>AI Benchmark Inverted Pairs</h1>
-      <p class="intro">
-        This table measures the <strong>count of inverted model pairs</strong> within the <strong>Top 100 ranked models</strong> on each AI benchmark.
-        A pair of models is counted as inverted when their relative ranking contradicts the expected ordering within the same model family under two rules:
-      </p>
       <ol class="rules-list">
-        <li>
-          <strong>Same-generation tier rule:</strong> Within the same model family and version, a larger tier is expected to rank ahead of a smaller tier
-          (for example, <strong>GPT 6.1 Sol</strong> ahead of <strong>GPT 6.1 Terra</strong> ahead of <strong>GPT 6.1 Luna</strong>, or <strong>Claude Opus 5.5</strong> ahead of <strong>Claude Sonnet 5.5</strong> ahead of <strong>Claude Haiku 5.5</strong>).
-          For latency benchmarks, this order is reversed so smaller models are expected to be faster. For cost benchmarks, larger models are expected to cost more.
-        </li>
-        <li>
-          <strong>Cross-generation same-tier rule:</strong> Within the same model family and size tier, a newer version is expected to rank ahead of an older version
-          (for example, <strong>GPT 6.1 Sol</strong> ahead of <strong>GPT 6.0 Sol</strong>, or <strong>Claude Opus 5.5</strong> ahead of <strong>Claude Opus 4.7</strong>).
-          Crossed pairs such as <strong>GPT 6.1 Sol</strong> and <strong>GPT 6.0 Luna</strong> are not compared.
-        </li>
+        <li><strong>Same-generation tier rule:</strong> Larger tiers should rank ahead of smaller tiers within the same version (e.g., GPT 6.1 Sol &gt; Terra &gt; Luna; reversed for latency/cost).</li>
+        <li><strong>Cross-generation same-tier rule:</strong> Newer versions should rank ahead of older versions within the same tier (e.g., GPT 6.1 Sol &gt; GPT 6.0 Sol).</li>
       </ol>
     </header>
 
