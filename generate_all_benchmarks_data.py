@@ -7,44 +7,45 @@ from compute_contradictions import evaluate_ranking, extract_rsc_json, parse_sim
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_DIR = os.path.join(BASE_DIR, 'raw_data') if os.path.exists(os.path.join(BASE_DIR, 'raw_data')) else BASE_DIR
 
-# Curated list of universally cited flagship AI benchmarks ("popular_benchmarks" view)
+# Authoritative canonical "Popular" benchmarks tracked by labs and community
 POPULAR_BENCHMARK_IDS = {
-    # Composite & Frontier Reasoning
-    'aa_v5_intelligence_index',
-    'arena_2026_oct_text',
-    'lb2_overall',
-    'lb1_overall',
-    'aa_v5_hle_diamond',
-    'aa_v4_gpqa',
-    'lb1_mathematics',
-    'aa_v5_critpt',
-    'aa_v5_critpt_v2_hard',
+    # LMSYS Chatbot Arena & Human Preference
+    'lmsys_sub_overall',
     'lmsys_sub_hard_6',
+    'lmsys_sub_coding',
+    'arena_2026_oct_text',
+    'arena_2026_oct_code',
+    'arena_2026_oct_vision',
+    # Frontier Reasoning & Hard Math/Science
+    'aa_v5_aime_2025',
+    'aa_v5_gpqa_diamond',
+    'aa_v5_hle_diamond',
+    'lb2_reasoning',
+    'aa_v5_critpt',
     # Coding & Software Engineering
     'swebench_verified_bash',
     'swebench_verified_all',
-    'arena_2026_oct_code',
+    'swebench_lite_all',
+    'aa_v5_livecodebench',
     'aa_v5_frontiercode_2_0',
     'aa_v5_terminalbench_4_0',
-    'aa_v5_scicode',
     'lb2_coding',
-    'lb2_design',
-    'lb1_coding',
     'aider_polyglot_pass2',
     'aider_code_editing',
     'evalplus_average',
-    # Agentic, Knowledge, Long-Context & Multimodal
-    'aa_v5_aa_briefcase',
-    'aa_v5_gdpval_aa_normalized',
-    'aa_v5_automationbench_aa',
+    'aa_v5_scicode',
+    # Agentic & Workflow Tool-Use
     'aa_v5_tau2_bench',
-    'lb2_browser',
-    'lb2_reasoning',
-    'aa_v5_omniscience_net',
+    'aa_v5_automationbench_aa',
+    'aa_v5_gdpval_aa_normalized',
+    'aa_v5_aa_briefcase',
+    # Composite & Instruction Following
+    'aa_v5_intelligence_index',
+    'lb2_overall',
+    'lb1_overall',
     'aa_v5_ifbench',
+    'aa_v5_omniscience_net',
     'aa_v5_artificial_analysis_long_context_reasoning',
-    'aa_v5_mlcr_aa',
-    'arena_2026_oct_vision',
     'aa_v5_healthbench',
 }
 
@@ -444,19 +445,19 @@ def build_all_benchmarks():
         with open(nak_path, 'r', encoding='utf-8') as f:
             nak = json.load(f)['data']['text']
         nak_defs = [
-            ('overall', 'Composite & Frontier', 'LMSYS Arena Overall (243 Models)'),
-            ('overall_style_control', 'Composite & Frontier', 'LMSYS Arena Overall (Style-Controlled)'),
-            ('hard_6', 'Composite & Frontier', 'LMSYS Arena Hard Prompts'),
-            ('hard_6_style_control', 'Composite & Frontier', 'LMSYS Arena Hard Prompts (Style-Controlled)'),
-            ('coding', 'Coding & Software Eng', 'LMSYS Arena Coding (Classic)'),
-            ('coding_style_control', 'Coding & Software Eng', 'LMSYS Arena Coding (Style-Controlled)'),
-            ('math', 'Science & Math Reasoning', 'LMSYS Arena Math'),
-            ('math_style_control', 'Science & Math Reasoning', 'LMSYS Arena Math (Style-Controlled)'),
-            ('if', 'Long-Context & Instruction', 'LMSYS Arena Instruction Following'),
-            ('if_style_control', 'Long-Context & Instruction', 'LMSYS Arena Instruction Following (Style-Controlled)'),
-            ('creative_writing', 'Long-Context & Instruction', 'LMSYS Arena Creative Writing'),
-            ('multiturn', 'Long-Context & Instruction', 'LMSYS Arena Multi-Turn Dialogue'),
-            ('long_user', 'Long-Context & Instruction', 'LMSYS Arena Longer Query'),
+            ('overall', 'Composite & Frontier', 'LMSYS Chatbot Arena — Overall'),
+            ('overall_style_control', 'Composite & Frontier', 'LMSYS Chatbot Arena — Overall (Style-Controlled)'),
+            ('hard_6', 'Composite & Frontier', 'LMSYS Chatbot Arena — Hard (Arena-Hard)'),
+            ('hard_6_style_control', 'Composite & Frontier', 'LMSYS Chatbot Arena — Hard (Style-Controlled)'),
+            ('coding', 'Coding & Software Eng', 'LMSYS Chatbot Arena — Coding'),
+            ('coding_style_control', 'Coding & Software Eng', 'LMSYS Chatbot Arena — Coding (Style-Controlled)'),
+            ('math', 'Science & Math Reasoning', 'LMSYS Chatbot Arena — Math'),
+            ('math_style_control', 'Science & Math Reasoning', 'LMSYS Chatbot Arena — Math (Style-Controlled)'),
+            ('if', 'Long-Context & Instruction', 'LMSYS Chatbot Arena — Instruction Following'),
+            ('if_style_control', 'Long-Context & Instruction', 'LMSYS Chatbot Arena — Instruction Following (Style-Controlled)'),
+            ('creative_writing', 'Long-Context & Instruction', 'LMSYS Chatbot Arena — Creative Writing'),
+            ('multiturn', 'Long-Context & Instruction', 'LMSYS Chatbot Arena — Multi-Turn Dialogue'),
+            ('long_user', 'Long-Context & Instruction', 'LMSYS Chatbot Arena — Longer Query'),
         ]
         for k, cat, title in nak_defs:
             if k in nak:
