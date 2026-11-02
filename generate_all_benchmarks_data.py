@@ -17,27 +17,33 @@ POPULAR_BENCHMARK_IDS = {
     'lmsys_sub_math',                # LMSYS Chatbot Arena — Math (243 models)
     'arena_2026_aug_code',           # Arena.ai Coding (108-Model Full Table) (108 models)
 
-    # 2. Frontier Reasoning & Hard Science/Math (>= 100 models)
+    # 2. LiveBench Full Aggregation (All Releases + 2.0, >= 100 models)
+    'livebench_overall',             # LiveBench Overall Score (All Releases & 2.0) (367 models)
+    'livebench_coding',              # LiveBench Coding (All Releases & 2.0) (367 models)
+    'livebench_reasoning',           # LiveBench Reasoning (All Releases & 2.0) (367 models)
+
+    # 3. Frontier Reasoning & Hard Science/Math (>= 100 models)
     'aa_v5_gpqa_diamond',            # GPQA Diamond (617 models)
     'aa_v5_humanitys_last_exam',     # Humanity's Last Exam (Full HLE) (677 models)
     'aa_v5_hle_diamond',             # HLE-Diamond (Humanity's Last Exam) (138 models)
     'aa_v5_aime_2025',               # AIME 2025 Competition Math (270 models)
     'aa_v5_critpt',                  # CritPt Physics Reasoning (594 models)
 
-    # 3. Coding & Software Engineering (>= 100 models)
+    # 4. Coding & Software Engineering (>= 100 models)
     'aa_v5_livecodebench',           # LiveCodeBench (343 models)
     'swebench_verified_all',         # SWE-bench Verified (All Submissions) (180 models)
+    'aider_coding_all',              # Aider Coding (Full Benchmark Suite) (161 models)
     'aa_v5_scicode',                 # SciCode Scientific Coding (244 models)
     'evalplus_humaneval_plus',       # EvalPlus HumanEval+ (80x Tests) (125 models)
     'aa_v5_terminalbench_4_0',       # Terminal-Bench 4.0 (236 models)
 
-    # 4. Agentic & Tool-Use Workflows (>= 100 models)
+    # 5. Agentic & Tool-Use Workflows (>= 100 models)
     'aa_v5_tau2_bench',              # Tau2-Bench Tool-Use Agentic (440 models)
     'aa_v5_automationbench_aa',       # AutomationBench-AA SaaS Workflows (239 models)
     'aa_v5_gdpval_aa_normalized',    # GDPval-AA Professional Work Elo (308 models)
     'aa_v5_aa_briefcase',            # AA-Briefcase v1.1 Knowledge Work (245 models)
 
-    # 5. Long-Context, Instruction Following & Multimodal (>= 100 models)
+    # 6. Long-Context, Instruction Following & Multimodal (>= 100 models)
     'aa_v5_ifbench',                 # IFBench Instruction Following (451 models)
     'aa_v5_artificial_analysis_long_context_reasoning', # AA Long-Context Reasoning (LCR) (589 models)
     'aa_v5_omniscience_net',         # AA-Omniscience v1.1 Net Score (107 models)
@@ -414,8 +420,24 @@ def build_all_benchmarks():
         add_bench('LiveBench 2.0 (Oct 2026)', 'Cost & Pricing', f"LiveBench 2.0 Cost — {cname} ($/Task)", f"lb2_cost_{col}", 'cost', True, 'USD/Task', items, f"Total API cost per task on LiveBench 2.0 {cname} (Sol expected to cost >= Terra >= Luna).")
 
     # =========================================================================
-    # 5. LIVEBENCH v1 (Latest Release 2026-06-25 — 71 Frontier Models)
+    # 5. LIVEBENCH FULL AGGREGATION (All Historical Releases + 2.0 — 367 Models)
     # =========================================================================
+    lb_agg_path = os.path.join(CACHE_DIR, 'livebench_full_aggregation_367_models.json')
+    if os.path.exists(lb_agg_path):
+        with open(lb_agg_path, 'r', encoding='utf-8') as f:
+            lb_full_data = json.load(f).get('models', [])
+        
+        lb_overall = [{'name': m['name'], 'score': m['scores'].get('overall')} for m in lb_full_data if m['scores'].get('overall') is not None]
+        lb_coding = [{'name': m['name'], 'score': m['scores'].get('coding')} for m in lb_full_data if m['scores'].get('coding') is not None]
+        lb_reasoning = [{'name': m['name'], 'score': m['scores'].get('reasoning')} for m in lb_full_data if m['scores'].get('reasoning') is not None]
+        lb_data = [{'name': m['name'], 'score': m['scores'].get('data_analysis')} for m in lb_full_data if m['scores'].get('data_analysis') is not None]
+
+        add_bench('LiveBench (Aggregated)', 'Composite & Frontier', 'LiveBench Overall Score (All Releases & 2.0)', 'livebench_overall', 'quality', True, 'Score (0-100)', lb_overall, 'Comprehensive contamination-free benchmark evaluating 367 models across all LiveBench releases including LiveBench 2.0.')
+        add_bench('LiveBench (Aggregated)', 'Coding & Software Eng', 'LiveBench Coding (All Releases & 2.0)', 'livebench_coding', 'quality', True, 'Score (0-100)', lb_coding, 'LiveBench coding benchmark evaluating real-world bug fixes and code generation across 367 models.')
+        add_bench('LiveBench (Aggregated)', 'Science & Math Reasoning', 'LiveBench Reasoning (All Releases & 2.0)', 'livebench_reasoning', 'quality', True, 'Score (0-100)', lb_reasoning, 'LiveBench hard logic, spatial, and mathematical reasoning benchmark across 367 models.')
+        add_bench('LiveBench (Aggregated)', 'Agentic & Enterprise', 'LiveBench Data Analysis (All Releases & 2.0)', 'livebench_data_analysis', 'quality', True, 'Score (0-100)', lb_data, 'LiveBench table join, reformatting, and data analysis benchmark across 367 models.')
+
+    # Single snapshot LiveBench v1 (Latest Release 2026-06-25 — 71 Frontier Models)
     with open(os.path.join(CACHE_DIR, 'lb1_2026_06_25_table.csv'), 'r', encoding='utf-8') as f:
         lb1_rows = list(csv.DictReader(f))
     with open(os.path.join(CACHE_DIR, 'lb1_2026_06_25_categories.json'), 'r', encoding='utf-8') as f:
@@ -554,6 +576,14 @@ def build_all_benchmarks():
     # =========================================================================
     # 8. AIDER CODING LEADERBOARDS (Polyglot Quality, Latency, Cost, Editing, Refactoring)
     # =========================================================================
+    # Full Aider Coding Aggregation across Polyglot, Editing, and Refactoring (161 Models)
+    aider_agg_path = os.path.join(CACHE_DIR, 'aider_full_aggregation_161_models.json')
+    if os.path.exists(aider_agg_path):
+        with open(aider_agg_path, 'r', encoding='utf-8') as f:
+            aider_full_data = json.load(f).get('models', [])
+        aider_all_items = [{'name': m['name'], 'score': m['score']} for m in aider_full_data if m.get('score') is not None]
+        add_bench('Aider Coding', 'Coding & Software Eng', 'Aider Coding (Full Benchmark Suite)', 'aider_coding_all', 'quality', True, '% Correct', aider_all_items, 'Comprehensive Aider coding score aggregated across Polyglot, Editing, and Refactoring tasks covering 161 models.')
+
     poly_entries = parse_simple_yml_list(os.path.join(CACHE_DIR, 'aider_polyglot.yml'))
     add_bench(
         'Aider Coding', 'Coding & Software Eng', 'Aider Polyglot Coding (Pass@2 %)', 'aider_polyglot_pass2',
