@@ -1,4 +1,4 @@
-# AI Benchmark Inverted Pairs
+# AI Contradictions Benchmark
 
 - **Live Table (Popular)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks)
 - **Live Table (ALL)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL)
@@ -11,7 +11,7 @@
 
 ## Popular
 
-| Benchmark | Inverted Score | Example Inversions in the Benchmark |
+| Benchmark | Contradictions | Example Contradictions in the Benchmark |
 | :--- | :-: | :--- |
 | **LiveCodeBench** | **0** | None |
 | **LiveBench 2.0 Overall Score** | **0** | None |
@@ -54,7 +54,7 @@
 <details>
 <summary><strong>Expand ALL benchmarks</strong></summary>
 
-| Benchmark | Inverted Score | Example Inversions in the Benchmark |
+| Benchmark | Contradictions | Example Contradictions in the Benchmark |
 | :--- | :-: | :--- |
 | **LMSYS Chatbot Arena — Hard (Style-Controlled)** | **0** | None |
 | **Terminal-Bench Hard** | **0** | None |

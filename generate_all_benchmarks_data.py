@@ -660,7 +660,7 @@ def build_all_benchmarks():
             )
         )
         lines = [
-            '| Benchmark | Inverted Score | Example Inversions in the Benchmark |',
+            '| Benchmark | Contradictions | Example Contradictions in the Benchmark |',
             '| :--- | :-: | :--- |'
         ]
         for b in benches:
@@ -677,7 +677,7 @@ def build_all_benchmarks():
     pop = [b for b in benchmarks if b.get('is_popular')]
     all_b = [b for b in benchmarks if b['canonical_top25']['comparable_pairs_count'] > 0]
     readme_md = (
-        "# AI Benchmark Inverted Pairs\n\n"
+        "# AI Contradictions Benchmark\n\n"
         "- **Live Table (Popular)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks)\n"
         "- **Live Table (ALL)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL)\n"
         "- **Repository**: [https://github.com/sagarvare/ai-benchmark-contradiction-index](https://github.com/sagarvare/ai-benchmark-contradiction-index)\n\n"

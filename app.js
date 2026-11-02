@@ -70,7 +70,7 @@
       return true;
     });
 
-    // Sort low to high by Inverted Score (contradictions_count ascending),
+    // Sort low to high by Contradictions (contradictions_count ascending),
     // tiebroken by comparable_pairs_count descending, then name ascending
     list.sort((a, b) => {
       const ca = a.canonical_top25;
