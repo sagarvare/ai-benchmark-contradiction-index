@@ -211,6 +211,17 @@ def evaluate_ranking(items, metric_type='quality', higher_is_better=True, top_k=
             deduped.append(dict(grp[0]))
     deduped.sort(key=lambda x: x['score'], reverse=higher_is_better)
     can_enriched = deduped[:top_k]
+    # If deduplication yielded fewer than top_k unique tuples, top off with remaining highest-scoring raw models
+    target_count = min(top_k, len(raw_items))
+    if len(can_enriched) < target_count:
+        seen_names = {x['name'] for x in can_enriched}
+        for item in raw_items:
+            if item['name'] not in seen_names:
+                can_enriched.append(dict(item))
+                seen_names.add(item['name'])
+                if len(can_enriched) == target_count:
+                    break
+        can_enriched.sort(key=lambda x: x['score'], reverse=higher_is_better)
     for idx, item in enumerate(can_enriched):
         item['rank'] = idx + 1
 

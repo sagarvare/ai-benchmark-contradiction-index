@@ -8,45 +8,40 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_DIR = os.path.join(BASE_DIR, 'raw_data') if os.path.exists(os.path.join(BASE_DIR, 'raw_data')) else BASE_DIR
 
 # Authoritative canonical "Popular" benchmarks tracked by labs and community
+# Strictly benchmarks with >= 100 model submissions evaluated across Top 100 models (4,950 candidate pairs)
 POPULAR_BENCHMARK_IDS = {
-    # LMSYS Chatbot Arena & Human Preference
-    'lmsys_sub_overall',
-    'lmsys_sub_hard_6',
-    'lmsys_sub_coding',
-    'arena_2026_oct_text',
-    'arena_2026_oct_code',
-    'arena_2026_oct_vision',
-    # Frontier Reasoning & Hard Math/Science
-    'aa_v5_aime_2025',
-    'aa_v5_gpqa_diamond',
-    'aa_v5_hle_diamond',
-    'lb2_reasoning',
-    'aa_v5_critpt',
-    # Coding & Software Engineering
-    'swebench_verified_bash',
-    'swebench_verified_all',
-    'swebench_lite_all',
-    'aa_v5_livecodebench',
-    'aa_v5_frontiercode_2_0',
-    'aa_v5_terminalbench_4_0',
-    'lb2_coding',
-    'aider_polyglot_pass2',
-    'aider_code_editing',
-    'evalplus_average',
-    'aa_v5_scicode',
-    # Agentic & Workflow Tool-Use
-    'aa_v5_tau2_bench',
-    'aa_v5_automationbench_aa',
-    'aa_v5_gdpval_aa_normalized',
-    'aa_v5_aa_briefcase',
-    # Composite & Instruction Following
-    'aa_v5_intelligence_index',
-    'lb2_overall',
-    'lb1_overall',
-    'aa_v5_ifbench',
-    'aa_v5_omniscience_net',
-    'aa_v5_artificial_analysis_long_context_reasoning',
-    'aa_v5_healthbench',
+    # 1. LMSYS Chatbot Arena / Human Preference (>= 100 models)
+    'lmsys_sub_overall',             # LMSYS Chatbot Arena — Overall (243 models)
+    'lmsys_sub_hard_6',              # LMSYS Chatbot Arena — Hard (Arena-Hard) (243 models)
+    'lmsys_sub_coding',              # LMSYS Chatbot Arena — Coding (243 models)
+    'lmsys_sub_math',                # LMSYS Chatbot Arena — Math (243 models)
+    'arena_2026_aug_code',           # Arena.ai Coding (108-Model Full Table) (108 models)
+
+    # 2. Frontier Reasoning & Hard Science/Math (>= 100 models)
+    'aa_v5_gpqa_diamond',            # GPQA Diamond (617 models)
+    'aa_v5_humanitys_last_exam',     # Humanity's Last Exam (Full HLE) (677 models)
+    'aa_v5_hle_diamond',             # HLE-Diamond (Humanity's Last Exam) (138 models)
+    'aa_v5_aime_2025',               # AIME 2025 Competition Math (270 models)
+    'aa_v5_critpt',                  # CritPt Physics Reasoning (594 models)
+
+    # 3. Coding & Software Engineering (>= 100 models)
+    'aa_v5_livecodebench',           # LiveCodeBench (343 models)
+    'swebench_verified_all',         # SWE-bench Verified (All Submissions) (180 models)
+    'aa_v5_scicode',                 # SciCode Scientific Coding (244 models)
+    'evalplus_humaneval_plus',       # EvalPlus HumanEval+ (80x Tests) (125 models)
+    'aa_v5_terminalbench_4_0',       # Terminal-Bench 4.0 (236 models)
+
+    # 4. Agentic & Tool-Use Workflows (>= 100 models)
+    'aa_v5_tau2_bench',              # Tau2-Bench Tool-Use Agentic (440 models)
+    'aa_v5_automationbench_aa',       # AutomationBench-AA SaaS Workflows (239 models)
+    'aa_v5_gdpval_aa_normalized',    # GDPval-AA Professional Work Elo (308 models)
+    'aa_v5_aa_briefcase',            # AA-Briefcase v1.1 Knowledge Work (245 models)
+
+    # 5. Long-Context, Instruction Following & Multimodal (>= 100 models)
+    'aa_v5_ifbench',                 # IFBench Instruction Following (451 models)
+    'aa_v5_artificial_analysis_long_context_reasoning', # AA Long-Context Reasoning (LCR) (589 models)
+    'aa_v5_omniscience_net',         # AA-Omniscience v1.1 Net Score (107 models)
+    'aa_v5_mmmu_pro',                # MMMU-Pro Multimodal Understanding (298 models)
 }
 
 def build_all_benchmarks():
@@ -60,6 +55,8 @@ def build_all_benchmarks():
         valid_cnt = sum(1 for x in items if x.get('score') is not None and not isinstance(x.get('score'), str))
         if valid_cnt < 10:
             return
+        if slug in POPULAR_BENCHMARK_IDS:
+            assert valid_cnt >= 100, f"Popular benchmark '{slug}' has only {valid_cnt} models, but popular benchmarks must have >= 100!"
         res_canonical = evaluate_ranking(items, metric_type=metric_type, higher_is_better=higher_is_better, top_k=100, deduplicate_canonical=True)
         res_raw = evaluate_ranking(items, metric_type=metric_type, higher_is_better=higher_is_better, top_k=100, deduplicate_canonical=False)
         res_full = evaluate_ranking(items, metric_type=metric_type, higher_is_better=higher_is_better, top_k=250, deduplicate_canonical=True)
@@ -731,8 +728,11 @@ def build_all_benchmarks():
         "- **Live Table (Popular)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=popular_benchmarks)\n"
         "- **Live Table (ALL)**: [https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL](https://sagarvare.github.io/ai-benchmark-contradiction-index/?view=ALL)\n"
         "- **Repository**: [https://github.com/sagarvare/ai-benchmark-contradiction-index](https://github.com/sagarvare/ai-benchmark-contradiction-index)\n\n"
-        "1. **Same-generation tier rule:** Larger tiers should rank ahead of smaller tiers within the same version (e.g., GPT 6.1 Sol > Terra > Luna).\n"
-        "2. **Cross-generation same-tier rule:** Newer versions should rank ahead of older versions within the same tier (e.g., GPT 6.1 Sol > GPT 6.0 Sol).\n\n"
+        "Measuring the count of contradicted intra-family model pairs within the **Top 100 models** on each benchmark (evaluating $\\binom{100}{2} = 4,950$ candidate pair comparisons per benchmark).\n\n"
+        "### Intra-Family Consistency Rules\n\n"
+        "1. **Same-generation tier rule:** Larger tiers should rank ahead of smaller tiers within the same version (e.g., GPT-4o > GPT-4o-mini; Claude 3.5 Sonnet > Claude 3.5 Haiku).\n"
+        "2. **Cross-generation same-tier rule:** Newer versions should rank ahead of older versions within the same tier (e.g., Claude 3.5 Sonnet > Claude 3 Sonnet; GPT-4o > GPT-4-turbo).\n\n"
+        "All popular benchmarks strictly require **>= 100 model submissions** on their public leaderboards.\n\n"
         "---\n\n"
         "## Popular\n\n"
         f"{make_table(pop)}\n\n"
